@@ -1,16 +1,21 @@
 class Square:
     def __init__(self):
+        self.posInList = None
+
         self.name = ""
         self.ID = 0
-        self.landType
+        self.landType = ""
+        self.harvestTime = 0
+        self.needsHarvest = bool(False)
+        self.harvestClock = 0
 
         self.leftPoint = [0,0]
         self.topPoint = [0,0]
         self.rightPoint = [0,0]
         self.bottomPoint = [0,0]
+        
         self.squareColour = (0,255,255)
         self.squareThickness = thickness=3
-
 
     def setPoints(self, point1, point2, point3, point4):
         self.leftPoint = point1
@@ -18,6 +23,7 @@ class Square:
         self.rightPoint = point3
         self.bottomPoint = point4
 
+ 
     #self determine which point is left, top, right or bottom
     """ def setPositioning(self, point1, point2, point3, point4):
         pointList = [point1, point2, point3, point4]

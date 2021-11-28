@@ -62,7 +62,7 @@ class flowerArea(Enum):
     network = 20
     sort = 21
     scending = 22
-
+ 
 class SquarePos(Enum):
     top_left = 1
     top_right = 2
@@ -71,9 +71,11 @@ class SquarePos(Enum):
 
 def main():
     countdownTimer()
-    createDefaultSqaure(baseSquare)
+
+    
+    #createDefaultSqaure(baseSquare)
     #exit(0)
-    squareList.append(baseSquare)
+    #squareList.append(baseSquare)
     #old
     #manualSqaurePos(baseSquare)
 
@@ -85,12 +87,12 @@ def main():
     #addSqaure(baseSquare, SquarePos.bottom_right, (255,0,255))
 
     #addSqaure(baseSquare, SquarePos.bottom_left, (255,0,255))
-    addMultipleSqaures(baseSquare, SquarePos.bottom_left, 10, (255,0,255))
-    addMultipleSqaures(squareList[-1], SquarePos.bottom_right, 10, (255,0,255))
-    addMultipleSqaures(squareList[-1], SquarePos.top_right, 10, (255,0,255))
-    addMultipleSqaures(squareList[-1], SquarePos.top_left, 9, (255,0,255))
+    #addMultipleSqaures(baseSquare, SquarePos.bottom_left, 10, (255,0,255))
+    #addMultipleSqaures(squareList[-1], SquarePos.bottom_right, 10, (255,0,255))
+    #addMultipleSqaures(squareList[-1], SquarePos.top_right, 10, (255,0,255))
+    #addMultipleSqaures(squareList[-1], SquarePos.top_left, 9, (255,0,255))
     #drawDebug
-    drawDiamonds(blank)
+    #drawDiamonds(blank)
 
     #hudClick(hudArea.bag)
     #hudClick(hudArea.select,0.01)
@@ -145,9 +147,7 @@ def main():
     #for i, sqaure in enumerate(squareList):
         #moveClickSquare(squareList[i], 0.5)
 
-
-    
-    cv.waitKey(0)
+    #cv.waitKey(0)
     #if cv.waitKey(1) == ord('q'):
         #cv.destroyAllWindows
         #break
@@ -258,27 +258,86 @@ def flowerMenuClick(flowerCommand, time=0.2):
 
 def plantingMenuClick(plantingCommand, time):
     if plantingCommand == flowerArea.tile1:
-        moveClick(700, 470, time)
+        moveClick(690, 470, time)
     if plantingCommand == flowerArea.tile2:
-        moveClick(870, 470, time)
+        moveClick(880, 470, time)
     if plantingCommand == flowerArea.tile3:
-        moveClick(1050, 470, time)
+        moveClick(1049, 470, time)
     if plantingCommand == flowerArea.tile4:
-        moveClick(1250, 470, time)
+        moveClick(1195, 470, time)
+
     if plantingCommand == flowerArea.tile5:
-        moveClick(680, 600, time)
+        moveClick(690, 562, time)
     if plantingCommand == flowerArea.tile6:
-        moveClick(880, 600, time)
+        moveClick(880, 562, time)
     if plantingCommand == flowerArea.tile7:
-        moveClick(1070, 600, time)
+        moveClick(1049, 562, time)
     if plantingCommand == flowerArea.tile8:
-        moveClick(1230, 600, time)
+        moveClick(1195, 562, time)
 
+    if plantingCommand == flowerArea.tile9:
+        moveClick(690, 640, time)
+    if plantingCommand == flowerArea.tile9:
+        moveClick(880, 640, time)
+    if plantingCommand == flowerArea.tile9:
+        moveClick(1049, 640, time)
+    if plantingCommand == flowerArea.tile9:
+        moveClick(1195, 640, time)
+        
 
-def plantFlower(sqaure, tile):
+def plantFlower(square, tile):
+    #click hud shovel
+    hudClick(hudArea.shovel)
+    #till land
+    moveClick(SqCenterPoint(square))
+    #click hud plant
+    hudClick(hudArea.plant)
+    #click land
+    moveClick(SqCenterPoint(square))
+    #click tile
+    plantingMenuClick(tile)
+    #check id
+    #apply stats to land
+    #if cannot find ID or get stats default to 1 hour for harvest clock
+    square.harvestTime = 60
+    square.harvestClock = square.harvestTime
+    #click water icon
+    hudClick(hudArea.water)
+    #click sqaure
+    moveClick(SqCenterPoint(square))
+
+def checkForHarvests():
+    #every minute check go through square list to see if any squares harvestClocks are at 1
+    #if so harvest land function
+    #replantFlower (which resets the stats from plantFlower function)
+     
     pass
+def harvestFlower(square):
+    #click scissors
+    hudClick(hudArea.scissor)
+    #click square that needs to be harvest
+    moveClick(SqCenterPoint(square))
+    #wait to see if pop up comes up
+    #if it does click harvest
+    if checkForPixels((814,452),20,20, (255,255,255)) == True:
+        #green harvest button is at x900, y574
+        moveClick(900, 574)
+    square.needsHarvest = False
+    #done 
 
-    
+
+def checkForPixels(center, xFar, yFar, pixelRGB = (255, 255, 255)):
+    screenshot = pyautogui.screenshot()
+    pyautogui.moveTo(center[0],center[1], 0.2)
+    for x in range(pyautogui.position()[0] - xFar, 
+                   pyautogui.position()[0] + xFar ):
+
+        for y in range(pyautogui.position()[1] - yFar, 
+                       pyautogui.position()[1] + yFar):
+
+            if screenshot.getpixel((x, y)) == pixelRGB:
+                return True
+
 
 def moveClick(x, y, time=0.2):
     pyautogui.click(x,y,duration=time)
@@ -536,4 +595,3 @@ def countdownTimer():
 
 if __name__ == "__main__":
     main()
-
