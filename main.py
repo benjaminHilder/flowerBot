@@ -12,6 +12,8 @@ from time import sleep
 import PIL 
 from math import sqrt
 import os
+import time
+from threading import Timer
 
 script_dir = os.path.dirname(__file__)
 
@@ -70,8 +72,9 @@ class SquarePos(Enum):
     bottom_left = 4
 
 def main():
-    countdownTimer()
-
+    #countdownTimer()
+    while True:
+        checkForHarvests(60)
     
     #createDefaultSqaure(baseSquare)
     #exit(0)
@@ -283,7 +286,31 @@ def plantingMenuClick(plantingCommand, time):
         moveClick(1049, 640, time)
     if plantingCommand == flowerArea.tile9:
         moveClick(1195, 640, time)
-        
+
+def checkForHarvests(timeBeforeCheck = 60):
+    #every minute check go through square list to see if any squares harvestClocks are at 1
+    #have a clock that counts down every 60 seconds
+    def timeout():
+        searchSquaresForTime()
+    
+    t = Timer(timeBeforeCheck, timeout)
+    t.start()
+    #if so harvest land function
+    #replantFlower (which resets the stats from plantFlower function)
+    #if curr
+
+def harvestFlower(square):
+    #click scissors
+    hudClick(hudArea.scissor)
+    #click square that needs to be harvest
+    moveClick(SqCenterPoint(square))
+    #wait to see if pop up comes up
+    #if it does click harvest
+    if checkForPixels((814,452),20,20, (255,255,255)) == True:
+        #green harvest button is at x900, y574
+        moveClick(900, 574)
+    square.needsHarvest = False
+    #done         
 
 def plantFlower(square, tile):
     #click hud shovel
@@ -306,25 +333,15 @@ def plantFlower(square, tile):
     #click sqaure
     moveClick(SqCenterPoint(square))
 
-def checkForHarvests():
-    #every minute check go through square list to see if any squares harvestClocks are at 1
-    #if so harvest land function
-    #replantFlower (which resets the stats from plantFlower function)
-     
-    pass
-def harvestFlower(square):
-    #click scissors
-    hudClick(hudArea.scissor)
-    #click square that needs to be harvest
-    moveClick(SqCenterPoint(square))
-    #wait to see if pop up comes up
-    #if it does click harvest
-    if checkForPixels((814,452),20,20, (255,255,255)) == True:
-        #green harvest button is at x900, y574
-        moveClick(900, 574)
-    square.needsHarvest = False
-    #done 
-
+def searchSquaresForTime():
+    for i in range(len(squareList)):
+        if squareList[i].harvestClock == 1:
+            harvestFlower(squareList[i])
+            squareList[i].harvestClock = squareList[i].harvestTime
+            plantFlower(squareList[i])
+        else:
+            squareList[i].harvestClock - 1
+        pass
 
 def checkForPixels(center, xFar, yFar, pixelRGB = (255, 255, 255)):
     screenshot = pyautogui.screenshot()

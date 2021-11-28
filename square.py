@@ -6,7 +6,6 @@ class Square:
         self.ID = 0
         self.landType = ""
         self.harvestTime = 0
-        self.needsHarvest = bool(False)
         self.harvestClock = 0
 
         self.leftPoint = [0,0]
