@@ -72,13 +72,17 @@ class SquarePos(Enum):
     bottom_left = 4
 
 def main():
-    #countdownTimer()
-    while True:
-        checkForHarvests(60)
+    countdownTimer()
+    createDefaultSqaure(baseSquare)
+    squareList.append(baseSquare)
+    #try:
+        #while True:
+            #checkForHarvests(60)
+    #except KeyboardInterrupt:
+        #pass
+
     
-    #createDefaultSqaure(baseSquare)
-    #exit(0)
-    #squareList.append(baseSquare)
+
     #old
     #manualSqaurePos(baseSquare)
 
@@ -90,12 +94,12 @@ def main():
     #addSqaure(baseSquare, SquarePos.bottom_right, (255,0,255))
 
     #addSqaure(baseSquare, SquarePos.bottom_left, (255,0,255))
-    #addMultipleSqaures(baseSquare, SquarePos.bottom_left, 10, (255,0,255))
-    #addMultipleSqaures(squareList[-1], SquarePos.bottom_right, 10, (255,0,255))
-    #addMultipleSqaures(squareList[-1], SquarePos.top_right, 10, (255,0,255))
-    #addMultipleSqaures(squareList[-1], SquarePos.top_left, 9, (255,0,255))
+    addMultipleSqaures(baseSquare, SquarePos.bottom_left, 10, (255,0,255))
+    addMultipleSqaures(squareList[-1], SquarePos.bottom_right, 10, (255,0,255))
+    addMultipleSqaures(squareList[-1], SquarePos.top_right, 10, (255,0,255))
+    addMultipleSqaures(squareList[-1], SquarePos.top_left, 9, (255,0,255))
     #drawDebug
-    #drawDiamonds(blank)
+    drawDiamonds(blank)
 
     #hudClick(hudArea.bag)
     #hudClick(hudArea.select,0.01)
@@ -146,11 +150,11 @@ def main():
     
 
     #print (squareList[0].leftPoint[0])
+    cv.waitKey(0)
+    for i, sqaure in enumerate(squareList):
+         moveClickSquare(squareList[i], 0.5)
 
-    #for i, sqaure in enumerate(squareList):
-        #moveClickSquare(squareList[i], 0.5)
 
-    #cv.waitKey(0)
     #if cv.waitKey(1) == ord('q'):
         #cv.destroyAllWindows
         #break
@@ -341,7 +345,6 @@ def searchSquaresForTime():
             plantFlower(squareList[i])
         else:
             squareList[i].harvestClock - 1
-        pass
 
 def checkForPixels(center, xFar, yFar, pixelRGB = (255, 255, 255)):
     screenshot = pyautogui.screenshot()
