@@ -1,6 +1,7 @@
 class Square:
     def __init__(self):
         self.posInList = None
+        self.realSquare = None
 
         self.name = ""
         self.ID = 0
@@ -13,8 +14,8 @@ class Square:
         self.rightPoint = [0,0]
         self.bottomPoint = [0,0]
         
-        self.squareColour = (0,255,255)
-        self.squareThickness = thickness=3
+        self.colour = (0,255,255)
+        self.thickness = thickness=3
 
     def setPoints(self, point1, point2, point3, point4):
         self.leftPoint = point1

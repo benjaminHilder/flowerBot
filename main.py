@@ -93,11 +93,10 @@ def main():
 
     #addSqaure(baseSquare, SquarePos.bottom_right, (255,0,255))
 
-    #addSqaure(baseSquare, SquarePos.bottom_left, (255,0,255))
-    addMultipleSqaures(baseSquare, SquarePos.bottom_left, 10, (255,0,255))
-    addMultipleSqaures(squareList[-1], SquarePos.bottom_right, 10, (255,0,255))
-    addMultipleSqaures(squareList[-1], SquarePos.top_right, 10, (255,0,255))
-    addMultipleSqaures(squareList[-1], SquarePos.top_left, 9, (255,0,255))
+    #addSqaure(SquarePos.bottom_right, baseSquare,  baseSquare, True, (255,0,255))
+    #addMultipleSqaures(SquarePos.bottom_left, baseSquare, 10, (255,0,255))
+    addMultipleSqauresWithFakes(SquarePos.bottom_left, baseSquare, 10, (255,0,255))
+    
     #drawDebug
     drawDiamonds(blank)
 
@@ -151,8 +150,8 @@ def main():
 
     #print (squareList[0].leftPoint[0])
     cv.waitKey(0)
-    for i, sqaure in enumerate(squareList):
-         moveClickSquare(squareList[i], 0.5)
+    #for i, sqaure in enumerate(squareList):
+         #moveClickSquare(squareList[i], 0.5)
 
 
     #if cv.waitKey(1) == ord('q'):
@@ -386,30 +385,6 @@ def SqCenterPoint(square):
 def drawDiamonds(canvas):
     drawAllDiamonds(blank)
     cv.imshow('1 sqaure', blank)
-def manualSqaurePos(square):
-    point1 = (0,0)
-    point2 = (0,0)
-    point3 = (0,0)
-    point4 = (0,0)
-    for i in range(0, 4):
-        setPosWait(i)
-        #correct pos then add to newPos
-        newPos = pyautogui.position()
-        print (newPos)
-        #sqaure.setPoint(i+1, newPos)
-
-        if (i+1 == 1):
-            point1 = newPos
-        elif (i+1 == 2):
-            point2 = newPos
-        elif (i+1 == 3):
-            point3 = newPos
-        elif (i+1 == 4):
-            point4 = newPos
-
-        time.sleep(1)
-    square.setPoints(point1, point2, point3, point4)
-    #square.setPositioning(point1, point2, point3, point4)
 
 def createDefaultSqaure(square):
     #purple colour code
@@ -444,7 +419,6 @@ def createDefaultSqaure(square):
             highestX = posArray[i]
         if highestY == None:
             highestY = posArray[i]
-            print (highestY)
 
         #find lowest X pos tuple
         #print(lowestY[1])
@@ -472,121 +446,162 @@ def createDefaultSqaure(square):
         if highestY[1] < posArray[i][1]:
             highestY = posArray[i]
             continue
-
-    print (lowestX, lowestY, highestX, highestY)
     square.setPoints(lowestX,highestY, highestX, lowestY)
 
-    
-
-    #print (posArray)
 
 
-def addMultipleSqaures (firstSqaure, nextPos, multiple, colour):
-    for i in range(0, multiple):
-        if i == 0:
-            addSqaure(firstSqaure, nextPos, colour)
-        else:
-            addSqaure(squareList[-1],nextPos, colour)
+def addMultipleSqaures (posDir, baseSquare, multiple, colour):
+    for i in range(multiple):
+        addSqaure(posDir, baseSquare, True, colour)
+        
 
+def addMultipleSqauresWithFakes(posDir, baseSquare, multiple, colour):
+    for i in range(multiple):
+        if i+1 != multiple:
+            addSqaure(posDir, baseSquare, False, (232,162,0))
+        if i+1 == multiple:
+            addSqaure(posDir, baseSquare, True, colour)
 
-
-def addSqaure(previousSquare, nextPos, squareColour = baseSquare.squareColour,
-              thickness = baseSquare.squareThickness):
+def addSqaure(posDir, baseSquare, realSquare = True, squareColour = baseSquare.colour,
+              thickness = baseSquare.thickness):
     square = Square()
+    if realSquare == True:
+        square.realSquare = True
+        square.colour = squareColour
+        square.thickness = thickness
+    else:
+        square.realSquare = False
+        square.colour = squareColour
+        square.thickness = thickness
     squareList.append(square)
-    squareList[-1].squareColour = squareColour
-    squareList[-1].squareThickness = thickness
 
-    if (nextPos == SquarePos.bottom_left):
-        square.rightPoint = previousSquare.topPoint
-        square.bottomPoint = previousSquare.leftPoint
+    positionNextSquare(square, posDir, baseSquare)
+
+
+
+def positionNextSquare(square, posDir, baseSquare):
+    
+    previousPos = squareList[-2]
+    if (posDir == SquarePos.bottom_left):
+        LTXdifference = previousPos.leftPoint[0] - previousPos.topPoint[0]
+        TLYdifference = previousPos.topPoint[1] - previousPos.leftPoint[1]
+
+        #setSquarePosFull(square, previousSquare, LTXdifference, TLYdifference)
+        square.rightPoint = previousPos.topPoint
+        square.bottomPoint = previousPos.leftPoint
         
         #topPoint
-        LTXdifference = previousSquare.leftPoint[0] - previousSquare.topPoint[0]
-        TLYdifference = previousSquare.topPoint[1] - previousSquare.leftPoint[1]
+        #LTXdifference = previousSquare.leftPoint[0] - previousSquare.topPoint[0]
+        #TLYdifference = previousSquare.topPoint[1] - previousSquare.leftPoint[1]
 
         #x
-        square.topPoint[0] = previousSquare.topPoint[0] + LTXdifference
+        square.topPoint[0] = previousPos.topPoint[0] + LTXdifference
         #y
-        square.topPoint[1] = previousSquare.topPoint[1] + TLYdifference
+        square.topPoint[1] = previousPos.topPoint[1] + TLYdifference
 
         #leftPoint
         #x
-        square.leftPoint[0] = previousSquare.leftPoint[0] + LTXdifference
+        square.leftPoint[0] = previousPos.leftPoint[0] + LTXdifference
         #y
-        square.leftPoint[1] = previousSquare.leftPoint[1] + TLYdifference
+        square.leftPoint[1] = previousPos.leftPoint[1] + TLYdifference
 
-    if (nextPos == SquarePos.bottom_right):
-        square.leftPoint = previousSquare.topPoint
-        square.bottomPoint = previousSquare.rightPoint
-        
+    if (posDir == SquarePos.bottom_right):
+        RTXdifference = previousPos.rightPoint[0] - previousPos.topPoint[0]
+        TRYdifference = previousPos.topPoint[1] - previousPos.rightPoint[1]
+
+
+        #setSquarePosFull(square, posDir, previousSquare, RTXdifference, TRYdifference)
+        square.leftPoint = previousPos.topPoint
+        square.bottomPoint = previousPos.rightPoint
+    
         #rightPoint
-        RTXdifference = previousSquare.rightPoint[0] - previousSquare.topPoint[0]
-        TRYdifference = previousSquare.topPoint[1] - previousSquare.rightPoint[1]
 
-        #x
-        square.rightPoint[0] = previousSquare.rightPoint[0] + RTXdifference
-        #y
-        square.rightPoint[1] = previousSquare.rightPoint[1] + TRYdifference 
+       # x
+        square.rightPoint[0] = previousPos.rightPoint[0] + RTXdifference
+       # y
+        square.rightPoint[1] = previousPos.rightPoint[1] + TRYdifference 
 
         #topPoint
         #x
-        square.topPoint[0] = previousSquare.topPoint[0] + RTXdifference 
-        #y
-        square.topPoint[1] = previousSquare.topPoint[1] + TRYdifference
+        square.topPoint[0] = previousPos.topPoint[0] + RTXdifference 
+       # y
+        square.topPoint[1] = previousPos.topPoint[1] + TRYdifference
 
-    if (nextPos == SquarePos.top_right):
-        square.topPoint = previousSquare.rightPoint
-        square.leftPoint = previousSquare.bottomPoint
-        
-        #rightPoint
-        RTXdifference = previousSquare.rightPoint[0] - previousSquare.topPoint[0]
-        TLYdifference = previousSquare.topPoint[1] - previousSquare.leftPoint[1]
 
-        #x
-        square.rightPoint[0] = previousSquare.rightPoint[0] + RTXdifference
-        #y
-        square.rightPoint[1] = previousSquare.bottomPoint[1]
+    if (posDir == SquarePos.top_right):
+       square.topPoint = previousPos.rightPoint
+       square.leftPoint = previousPos.bottomPoint
+       
+       #rightPoint
+       RTXdifference = previousPos.rightPoint[0] - previousPos.topPoint[0]
+       TLYdifference = previousPos.topPoint[1] - previousPos.leftPoint[1]
 
-        #bottomPoint
-        #x
-        square.bottomPoint[0] = previousSquare.bottomPoint[0] + RTXdifference
-        #y
-        square.bottomPoint[1] = previousSquare.bottomPoint[1] - TLYdifference
+       #x
+       square.rightPoint[0] = previousPos.rightPoint[0] + RTXdifference
+       #y
+       square.rightPoint[1] = previousPos.bottomPoint[1]
 
-    if (nextPos == SquarePos.top_left):
-        square.topPoint = previousSquare.leftPoint
-        square.rightPoint = previousSquare.bottomPoint
-        
-        #leftPoint
-        LBXdifference = previousSquare.leftPoint[0] - previousSquare.bottomPoint[0]
-        LBYdifference = previousSquare.leftPoint[1] - previousSquare.bottomPoint[1]
+       #bottomPoint
+       #x
+       square.bottomPoint[0] = previousPos.bottomPoint[0] + RTXdifference
+       #y
+       square.bottomPoint[1] = previousPos.bottomPoint[1] - TLYdifference
 
-        #x
-        square.leftPoint[0] = previousSquare.leftPoint[0] + LBXdifference
-        #y
-        square.leftPoint[1] = previousSquare.bottomPoint[1]
+    if (posDir == SquarePos.top_left):
+       square.topPoint = previousPos.leftPoint
+       square.rightPoint = previousPos.bottomPoint
+       
+       #leftPoint
+       LBXdifference = previousPos.leftPoint[0] - previousPos.bottomPoint[0]
+       LBYdifference = previousPos.leftPoint[1] - previousPos.bottomPoint[1]
 
-        #bottomPoint
-        #x
-        square.bottomPoint[0] = previousSquare.bottomPoint[0] + LBXdifference
-        #y
-        square.bottomPoint[1] = previousSquare.bottomPoint[1] - LBYdifference
+       #x
+       square.leftPoint[0] = previousPos.leftPoint[0] + LBXdifference
+       #y
+       square.leftPoint[1] = previousPos.bottomPoint[1]
 
-def setPosWait(iterator):
-    while True:
-        leftClickCheck = win32api.GetKeyState(0x01) #0x01 = left mouse button
-        if (iterator == 0):
-            print("waiting to set left point")
-        elif (iterator == 1):
-            print("waiting to set top point") 
-        elif (iterator == 2):
-            print("waiting to set right point")            
-        elif (iterator == 3):
-            print("waiting to set bottom point")
-        if (leftClickCheck < 0):
-            break
+       #bottomPoint
+       #x
+       square.bottomPoint[0] = previousPos.bottomPoint[0] + LBXdifference
+       #y
+       square.bottomPoint[1] = previousPos.bottomPoint[1] - LBYdifference
 
+#def setSquarePosFull(square, posDir, prevPos, diff1, diff2):
+#    pos1 = None
+#    pos2 = None
+#    pos3 = None
+#    pos4 = None
+#
+#    prevPos1 = None
+#    prevPos2 = None
+#    prevPos3 = None
+#    prevPos4 = None
+#    
+#    if posDir == SquarePos.bottom_right:
+#        pos1 = square.leftPoint
+#        pos2 = square.topPoint
+#        pos3 = square.bottomPoint
+#        pos4 = square.rightPoint
+#
+#        prevPos1 = prevPos.topPoint
+#        prevPos2 = prevPos.rightPoint
+#    
+#    #left               top
+#    pos1 = prevPos1
+#    #bot                right
+#    pos3 = prevPos2
+#    #rightPoint
+#    #RTXdifference = prevPos.rightPoint[0] - prevPos.topPoint[0]
+#    #TRYdifference = prevPos.topPoint[1] - prevPos.rightPoint[1]
+#    #x
+#    pos4[0] = prevPos2[0] + diff1
+#    #y
+#    pos4[1] = prevPos2[1] + diff2 
+#    #topPoint
+#    #x
+#    pos2[0] = prevPos1[0] + diff1
+#    #y
+#    pos2[1] = prevPos1[1] + diff2    
 
 
 def drawDiamond(img, leftPoint, topPoint, rightPoint, bottomPoint, colour, thickness):
@@ -600,8 +615,10 @@ def drawAllDiamonds(img):
         print (squareList[i].leftPoint)
         drawDiamond(img, squareList[i].leftPoint, squareList[i].topPoint, 
                          squareList[i].rightPoint, squareList[i].bottomPoint,
-                         squareList[i].squareColour, 
-                         squareList[i].squareThickness)
+                         squareList[i].colour,
+                         squareList[i].thickness)
+        print(squareList[i].realSquare)
+        
 
 def countdownTimer():
 
