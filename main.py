@@ -9,7 +9,7 @@ from enum import Enum
 import cv2 as cv
 import numpy as np
 from time import sleep
-import PIL 
+from PIL import Image
 from math import sqrt
 import os
 import time
@@ -19,6 +19,8 @@ script_dir = os.path.dirname(__file__)
 
 squareList = []
 baseSquare = Square()
+newSqaure = Square()
+
 
 blank = np.zeros((1080,1920,3), dtype='uint8')
 
@@ -73,18 +75,16 @@ class SquarePos(Enum):
 
 def main():
     countdownTimer()
-    createDefaultSqaure(baseSquare)
+    baseSquare.realSquare = True
+    createDefaultSquare2(baseSquare)
     squareList.append(baseSquare)
+    #squareList.append(newSqaure)
     #try:
         #while True:
             #checkForHarvests(60)
     #except KeyboardInterrupt:
         #pass
 
-    
-
-    #old
-    #manualSqaurePos(baseSquare)
 
 
     #addSqaure(baseSquare, SquarePos.top_left, (255,0,255))
@@ -94,12 +94,18 @@ def main():
     #addSqaure(baseSquare, SquarePos.bottom_right, (255,0,255))
 
     #addSqaure(SquarePos.bottom_right, baseSquare,  baseSquare, True, (255,0,255))
-    #addMultipleSqaures(SquarePos.bottom_left, baseSquare, 10, (255,0,255))
-    addMultipleSqauresWithFakes(SquarePos.bottom_left, baseSquare, 10, (255,0,255))
+    
+    #addMultipleSqauresWithFakes(SquarePos.bottom_left, baseSquare, 10, (255,0,255))
+    #addMultipleSqaures(SquarePos.bottom_right, baseSquare, 10, (255,0,255))
+    #addMultipleSqauresWithFakes(SquarePos.top_right, baseSquare, 5, (255,0,255))
+    #addMultipleSqauresWithFakes(SquarePos.top_right, baseSquare, 5, (255,0,255))
+
     
     #drawDebug
-    drawDiamonds(blank)
-
+    #drawDiamonds(blank)
+    #drawDiamond(blank, baseSquare.leftPoint, baseSquare.topPoint, baseSquare.rightPoint, baseSquare.bottomPoint,  (166, 107, 208), thickness=1)
+    #drawDiamond(blank, newSqaure.leftPoint, newSqaure.topPoint, newSqaure.rightPoint, newSqaure.bottomPoint, (68,190,255),  thickness=1)
+    #cv.imshow('1 sqaure', blank)
     #hudClick(hudArea.bag)
     #hudClick(hudArea.select,0.01)
     #hudClick(hudArea.shovel, 1)
@@ -151,8 +157,17 @@ def main():
     #print (squareList[0].leftPoint[0])
     cv.waitKey(0)
     #for i, sqaure in enumerate(squareList):
-         #moveClickSquare(squareList[i], 0.5)
-
+        #if squareList[i].realSquare == True:
+                #moveClickSquare(squareList[i], 1)
+    #for i, sqaure in enumerate(squareList):
+         #moveClick(squareList[i].rightPoint[0],squareList[i].rightPoint[1], 1)
+         #moveClick(squareList[i].topPoint[0],squareList[i].topPoint[1], 1)
+         #moveClick(squareList[i].leftPoint[0],squareList[i].leftPoint[1], 1)
+        # moveClick(squareList[i].bottomPoint[0],squareList[i].bottomPoint[1], 1)
+    #moveClick(squareList[0].rightPoint[0],squareList[0].rightPoint[1], 1) 
+    #moveClick(squareList[0].topPoint[0],squareList[0].topPoint[1], 1)
+    #moveClick(squareList[0].leftPoint[0],squareList[0].leftPoint[1], 1)
+    #moveClick(squareList[0].bottomPoint[0],squareList[0].bottomPoint[1], 1)
 
     #if cv.waitKey(1) == ord('q'):
         #cv.destroyAllWindows
@@ -386,7 +401,168 @@ def drawDiamonds(canvas):
     drawAllDiamonds(blank)
     cv.imshow('1 sqaure', blank)
 
-def createDefaultSqaure(square):
+def createDefaultSquare2(square):
+    #BGR 68, 190, 255
+    #pixelBGR = (68, 190, 255)
+    pixelRGB = (255, 190, 68)
+    posArray = []
+
+    innerLeft = None
+    innerTop = None
+    innerRight = None
+    innerBottom = None
+    #user places cursor he wants to be scanned
+    #program saves position of mouse
+    savedMousePos = pyautogui.position()
+    #moves the mouse off of the sqaure (far away)
+    pyautogui.move(543,1911)
+
+    #screenshot
+    screenshot = pyautogui.screenshot()
+
+    #scans the area (smallish distance) for yellow bars
+    #creates a sqaure within yellow bars as the clickable square
+    
+    #bottom right
+    i = 0
+    j = 0
+    firstRun = True
+    while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] + j)) != pixelRGB):
+        i = 0
+        if firstRun == False:
+            j += 1
+        while (screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] + j)) != pixelRGB):
+            posArray.append((savedMousePos[0]+i,savedMousePos[1] + j))  
+            i += 1
+            firstRun = False
+
+    #bottom left           
+    i = 0
+    j = 0
+    firstRun = True
+    while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] + j)) != pixelRGB):
+        i = 0
+        if firstRun == False:
+            j += 1
+        while (screenshot.getpixel((savedMousePos[0] - i, savedMousePos[1] + j)) != pixelRGB):
+            posArray.append((savedMousePos[0]-i,savedMousePos[1] + j))
+            firstRun = False
+            i += 1
+
+    #top left     
+    i = 0
+    j = 0
+    firstRun = True
+
+    while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] - j)) != pixelRGB):
+        i = 0
+        if firstRun == False:
+            j += 1
+        while (screenshot.getpixel((savedMousePos[0] - i, savedMousePos[1] - j)) != pixelRGB):
+            posArray.append((savedMousePos[0]-i,savedMousePos[1] - j))
+            firstRun = False
+            i += 1
+            
+    #top right
+    i = 0
+    j = 0
+    firstRun = True
+    #
+    while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] - j)) != pixelRGB):
+        i = 0
+        if firstRun == False:
+            j += 1
+        while (screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] - j)) != pixelRGB):
+            posArray.append((savedMousePos[0]+i,savedMousePos[1] - j))
+            firstRun = False
+            i += 1
+            
+      
+
+    newImg = Image.new('RGB', (1920,1080))
+    for i in range (len(posArray)):
+        if i == 0:
+            continue
+        newImg.putpixel((posArray[i]), (255,0,255))
+        newImg.save
+
+
+
+    # Convert RGB to BGR 
+
+
+   #for i in range(len(posArray)):
+   #    if innerLeft == None:
+   #        innerLeft = posArray[i]
+   #    if innerTop == None:
+   #        innerTop = posArray[i]
+   #    if innerRight == None:
+   #        innerRight = posArray[i]
+   #    if innerBottom == None:
+   #        innerBottom = posArray[i]
+
+   #        #if screenshot.getpixel((lowestY[0], lowestY[1] + pix +1)) != pixelRGB:
+   #    #find lowest X pos tuple
+   #    if innerLeft[0] > posArray[i][0]:  
+   #        innerLeft = posArray[i]
+   #        continue
+   #    
+   #    #find lowest Y pos tuple
+
+   #    if innerBottom[1] > posArray[i][1]:
+   #        innerBottom = posArray[i]
+   #        continue
+   #    
+   #    #find highest X pos tuple
+
+   #    if innerRight[0] < posArray[i][0]:
+   #        innerRight = posArray[i]
+   #        continue
+   #    
+   #    #find highest Y pos tuple
+
+   #    if innerTop [1] < posArray[i][1]:
+   #        innerTop  = posArray[i]
+   #        continue
+
+        
+    #newImg.putpixel((innerLeft), (255,0,255))
+    #newImg.save
+#
+    #newImg.putpixel((innerBottom), (255,0,255))
+    #newImg.save
+#
+    #newImg.putpixel((innerRight), (255,0,255))
+    #newImg.save
+#
+    #newImg.putpixel((innerTop), (255,0,255))
+    #newImg.save
+
+    open_cv_image = np.array(newImg) 
+    open_cv_image = open_cv_image[:, :, ::-1].copy()
+    cv.imshow("newImg", open_cv_image)
+    cv.waitKey(0)
+
+    square.setPoints(innerLeft, innerTop, innerRight, innerBottom)
+
+    #for the outer
+    #for left and right sides
+    #find the left point or right point
+    #find the next inner across from the current clickable square (so inbetween)
+    #divide the x pos, that the no clickable left and right side
+    
+    #for top and bottom sides
+    #find the next square above or below
+    #get the inbetween distance again but for the y
+    #devide that y by 2 and these are the non clickable areas
+    #finds the inner
+    #saves the outer and inner positions
+    #when placeing squares, outer must overlap
+
+    
+    pass
+
+def createDefaultSquare(square):
     #purple colour code
     #RGB - 166, 107, 208
     #HSV - 183, 124, 148
@@ -398,6 +574,15 @@ def createDefaultSqaure(square):
     highestX = None
     highestY = None
 
+    innerLeft = None
+    innerTop = None
+    innerRight = None
+    innerBottom = None
+
+    #bufferBottomLeft = None
+    #bufferBottomRight = None
+    buffer = None
+
     screenshot = pyautogui.screenshot()
     for x in range(pyautogui.position()[0] - 125, 
                    pyautogui.position()[0] + 125 ):
@@ -406,8 +591,7 @@ def createDefaultSqaure(square):
                        pyautogui.position()[1] + 110):
 
             if screenshot.getpixel((x, y)) == pixelRGB:
-                posArray.append((x,y))
-
+                posArray.append((x,y))  
                 #pyautogui.moveTo(x,y)
 
     for i in range(len(posArray)):
@@ -423,7 +607,7 @@ def createDefaultSqaure(square):
         #find lowest X pos tuple
         #print(lowestY[1])
         #print(posArray[i][1])
-
+    #found outer of each edge
         #find lowest X pos tuple
         if lowestX[0] > posArray[i][0]:  
             lowestX = posArray[i]
@@ -446,9 +630,48 @@ def createDefaultSqaure(square):
         if highestY[1] < posArray[i][1]:
             highestY = posArray[i]
             continue
-    square.setPoints(lowestX,highestY, highestX, lowestY)
 
+    #square.setPoints(lowestX, highestY, highestX, lowestY)
 
+    #use outer edge to now find the inner for consistancy 
+    #innerLeft
+    for pix in range (15):
+        if screenshot.getpixel((lowestX[0] + pix + 1, lowestX[1])) != pixelRGB:
+            innerLeft = [lowestX[0] + pix + 1, lowestX[1]]
+            break
+
+    #innerTop
+    for pix in range (15):
+        if screenshot.getpixel((highestY[0], highestY[1] - pix - 1)) != pixelRGB:
+            innerTop = [highestY[0], highestY[1] - pix - 1]
+            break
+   
+    #innerRight
+    for pix in range (15):
+        print("highestX: ",highestX[0] - pix - 1,highestX[1] - pix - 1 )
+        #if screenshot.getpixel((highestX[0] - pix - 1,)) != pixelRGB:
+            #innerRight = [highestX[0] - pix - 1, highestX[1] - pix - 1]
+            #print("HighestX: ", highestX)
+            #print("innerRight: ", innerRight)
+            #break
+    
+    #innerBottoms
+    for pix in range (15):
+        if screenshot.getpixel((lowestY[0], lowestY[1] + pix +1)) != pixelRGB:
+            innerBottom = [lowestY[0], lowestY[1] + pix +1]
+            break
+
+    #find buffers
+    #rightBuffer
+    #sbuffer = innerBottom[1]- lowestY[1] 
+    
+    #rightBuffer = [innerRight[0] - highestX[0], innerRight[1] - highestX[1]]
+    #print(rightBuffer)
+    #innerRight = [innerRight[0] - rightBuffer[0], innerRight[1] - rightBuffer[1]]
+    #innerLeft = [innerLeft[0]  + buffer, innerLeft[1]  + buffer]
+    #innerBottom = [innerBottom[0] + buffer,innerBottom[1] + buffer]
+
+    square.setPoints(innerLeft, innerTop, innerRight, innerBottom)
 
 def addMultipleSqaures (posDir, baseSquare, multiple, colour):
     for i in range(multiple):
@@ -612,12 +835,12 @@ def drawDiamond(img, leftPoint, topPoint, rightPoint, bottomPoint, colour, thick
 
 def drawAllDiamonds(img):
     for i, sqaure in enumerate(squareList):
-        print (squareList[i].leftPoint)
+        #print (squareList[i].leftPoint)
         drawDiamond(img, squareList[i].leftPoint, squareList[i].topPoint, 
                          squareList[i].rightPoint, squareList[i].bottomPoint,
                          squareList[i].colour,
                          squareList[i].thickness)
-        print(squareList[i].realSquare)
+        #print(squareList[i].realSquare)
         
 
 def countdownTimer():
