@@ -21,8 +21,9 @@ script_dir = os.path.dirname(__file__)
 squareList = []
 baseSquare = Square()
 newSqaure = Square()
-BLTR_BOARDER = 0
-TLBR_BOARDER = 0
+
+squareBoarderX = 0
+squareBoarderY = 0
 
 
 
@@ -413,6 +414,7 @@ def createDefaultSquare2(square):
     innerArray = []
     outerArray = []
     endPointsArray = []
+    endPointsArrayOuter = []
     columnArray = []
     
     innerMinX = None
@@ -525,8 +527,9 @@ def createDefaultSquare2(square):
     yMin2Max = lambda y: y[1]
     innerArray.sort(key=yMin2Max)
 
-
+    #create new image for debug
     newImg = Image.new('RGB', (1920,1080))
+    #add inner array to image
     for i in range (len(innerArray)):
         if i == 0:
             continue
@@ -537,14 +540,14 @@ def createDefaultSquare2(square):
     #find end points
     #use it to find the trend (trend is the difference for the last x of the first and second lines of pixels)
     #also use the end points array to create the outer edge without checking over the inner square
+
     for i in range(len(innerArray)):
         try:
             if innerArray[i][1] != innerArray[i+1][1]:
-                endPointsArray.append(innerArray[i])  
+                endPointsArray.append(innerArray[i]) 
 
         except:
             pass
-    print (len(innerArray))
 
     trend = endPointsArray[1][0]- endPointsArray[0][0]
 
@@ -581,57 +584,22 @@ def createDefaultSquare2(square):
             new_outerArray.append(outerArray[i])
     
     outerArray = new_outerArray
-    
-    ##DISTANCES FOR OUTTA EDGE
-    #BLTR_BOARDER = 0
-    #for val in range(len(outerArray)):
-    #    #if BLTR_BOARDER == 0:
-    #    #    BLTR_BOARDER = 1
-    #    #    continue
-    #    if outerArray[val][1] == outerArray[val+1][1]:
-    #        #print(outerArray[val][1])
-    #        BLTR_BOARDER += 1
-    #    if outerArray[val][1] != outerArray[val+1][1]:
-    #        BLTR_BOARDER += 1
-    #        BLTR_BOARDER -= 1
-    #       # print("size is: ", BLTR_BOARDER)
-    #        print('break')
-    #        break
-    
 
-    #TLBR_BOARDER = 0
-    ##startOfLine = True
-    ##Loop over the inner array
-    #halfWay = False
-    #for i in range(len(innerArray)):
-    #    
-    #    if halfWay == False:
-    #        #if next pixel's Y is not the same as last, its on a new line
-    #        try:
-    #            if innerArray[i][1] != innerArray[i+1][1]:
-    #                #print("First Check: ", "Inner1Y: ", innerArray[i][1], " Inner2Y: ",innerArray[i+1][1] )
-    #                #loop over again as now we are checking to see if the X's values are the same
-    #                #loop over and find when the next one isn;t the same
-    #                firstCheckX = innerArray[i][0]
-    #                
-    #                #print ("firstCheckX: ", firstCheckX )
-    #                for k in range(innerArray[i+1][1]):
-    #                    
-    #                    #last x on next row
-    #                    if innerArray[i+1][1] != innerArray[i+2][1]:
-#
-    #                    #check X values
-    #                    #if the x are the same, that means we have hit half way
-    #                        if firstCheckX == innerArray[i+1][0]:
-    #                            #print("found") 
-    #                            pass
-    #                        elif firstCheckX != innerArray[i+1][0]:
-    #                            #print("not same firstCheckX: ", firstCheckX , " +1: ", innerArray[i+1][0])
-    #                            pass
-    #        except:
-    #            print("done")
-    #    elif halfWay == True:
-    #        pass
+    #boarder x
+    for i in range(len(outerArray)):
+        try:
+            if outerArray[i][1] != outerArray[i+1][1]:
+                endPointsArrayOuter.append(outerArray[i]) 
+                print("found")
+
+        except:
+            pass
+    squareBoarderX = endPointsArrayOuter[1][0] - endPointsArray[1][0]-1
+
+    innerSqaureCornerLeft = 0
+    innerSqaureCornerRight = 0
+    innerSqaureCornerUpper = 0
+    innerSqaureCornerLower = 0
 
     for val in range(len(columnArray)):    
             try:
@@ -654,6 +622,18 @@ def createDefaultSquare2(square):
         if i == 0:
             continue
         newImg.putpixel((outerArray[i]), (0,0,255))
+        newImg.save
+
+    for i in range (len(endPointsArrayOuter)):
+        if i == 0:
+            continue
+        newImg.putpixel((endPointsArrayOuter[i]), (47,70,34))
+        newImg.save
+
+    for i in range (len(endPointsArray)):
+        if i == 0:
+            continue
+        newImg.putpixel((endPointsArray[i]), (47,70,34))
         newImg.save
 
     for i in range (len(columnArray)):
