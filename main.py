@@ -1,4 +1,5 @@
 from io import DEFAULT_BUFFER_SIZE
+from sys import _debugmallocstats, exec_prefix, flags
 from PyQt5.QtGui import QPainter
 #from enb_bot.image_bot.recorder import OUTPUT_FILENAME
 from square import Square
@@ -20,6 +21,10 @@ script_dir = os.path.dirname(__file__)
 squareList = []
 baseSquare = Square()
 newSqaure = Square()
+BLTR_BOARDER = 0
+TLBR_BOARDER = 0
+
+
 
 
 blank = np.zeros((1080,1920,3), dtype='uint8')
@@ -405,7 +410,16 @@ def createDefaultSquare2(square):
     #BGR 68, 190, 255
     #pixelBGR = (68, 190, 255)
     pixelRGB = (255, 190, 68)
-    posArray = []
+    innerArray = []
+    outerArray = []
+    endPointsArray = []
+    columnArray = []
+    
+    innerMinX = None
+    innerMaxX = None
+    innerMinY = None
+    innerMaxY = None
+    
 
     innerLeft = None
     innerTop = None
@@ -413,7 +427,7 @@ def createDefaultSquare2(square):
     innerBottom = None
     #user places cursor he wants to be scanned
     #program saves position of mouse
-    savedMousePos = pyautogui.position()
+    savedMousePos = [pyautogui.position()[0],pyautogui.position()[1]]
     #moves the mouse off of the sqaure (far away)
     pyautogui.move(543,1911)
 
@@ -422,8 +436,11 @@ def createDefaultSquare2(square):
 
     #scans the area (smallish distance) for yellow bars
     #creates a sqaure within yellow bars as the clickable square
+
     
-    #bottom right
+    
+    
+    #bottom right row
     i = 0
     j = 0
     firstRun = True
@@ -432,7 +449,23 @@ def createDefaultSquare2(square):
         if firstRun == False:
             j += 1
         while (screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] + j)) != pixelRGB):
-            posArray.append((savedMousePos[0]+i,savedMousePos[1] + j))  
+            innerArray.append((savedMousePos[0]+i,savedMousePos[1] + j))  
+            i += 1
+            firstRun = False
+    
+    #bottom right column    
+    i = 0 #i
+    j = 0 #j
+    firstRun = True
+    while (screenshot.getpixel((savedMousePos[0] + j, savedMousePos[1])) != pixelRGB):
+        i = 0
+        if firstRun == False:
+            j += 1
+        while (screenshot.getpixel((savedMousePos[0] + j, savedMousePos[1] + i)) != pixelRGB):
+            if (savedMousePos[0]+j,savedMousePos[1] + i) not in innerArray:
+                columnArray.append((savedMousePos[0]+j,savedMousePos[1] + i))
+                if firstRun:
+                    columnArray.append((savedMousePos[0]+j,savedMousePos[1] + i))  
             i += 1
             firstRun = False
 
@@ -445,10 +478,25 @@ def createDefaultSquare2(square):
         if firstRun == False:
             j += 1
         while (screenshot.getpixel((savedMousePos[0] - i, savedMousePos[1] + j)) != pixelRGB):
-            posArray.append((savedMousePos[0]-i,savedMousePos[1] + j))
+            innerArray.append((savedMousePos[0]-i,savedMousePos[1] + j))
             firstRun = False
             i += 1
 
+    #bottom left column    
+    i = 0 #i
+    j = 0 #j
+    firstRun = True
+    while (screenshot.getpixel((savedMousePos[0] + j, savedMousePos[1])) != pixelRGB):
+        i = 0
+        if firstRun == False:
+            j += 1
+        while (screenshot.getpixel((savedMousePos[0] - j, savedMousePos[1] + i)) != pixelRGB):
+            if (savedMousePos[0]-j,savedMousePos[1] + i) not in innerArray:
+                columnArray.append((savedMousePos[0]-j,savedMousePos[1] + i))
+                if firstRun:
+                    columnArray.append((savedMousePos[0]-j,savedMousePos[1] + i))  
+            i += 1
+            firstRun = False
     #top left     
     i = 0
     j = 0
@@ -459,10 +507,9 @@ def createDefaultSquare2(square):
         if firstRun == False:
             j += 1
         while (screenshot.getpixel((savedMousePos[0] - i, savedMousePos[1] - j)) != pixelRGB):
-            posArray.append((savedMousePos[0]-i,savedMousePos[1] - j))
+            innerArray.append((savedMousePos[0]-i,savedMousePos[1] - j))
             firstRun = False
             i += 1
-            
     #top right
     i = 0
     j = 0
@@ -473,82 +520,493 @@ def createDefaultSquare2(square):
         if firstRun == False:
             j += 1
         while (screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] - j)) != pixelRGB):
-            posArray.append((savedMousePos[0]+i,savedMousePos[1] - j))
+            innerArray.append((savedMousePos[0]+i,savedMousePos[1] - j))
             firstRun = False
             i += 1
+
+
+    #sorting inner list 
+    yMin2Max = lambda y: y[1]
+    innerArray.sort(key=yMin2Max)
+    #print (innerArray[0])
+    #innerArray.pop(0)
+    #innerArray.insert(0, (innerArray[0]-1, innerArray[1]))
+    #print (innerArray[0])
+
+    #print(innerArray[0])
+
+    
+    ##top column    
+    #i = 0 #i
+    #j = 0 #j
+    #firstRun = True
+    #while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] - j)) != pixelRGB):
+    #    i = 0
+    #    if firstRun == False:
+    #        j += 1
+    #    while (screenshot.getpixel((savedMousePos[0] - i, savedMousePos[1] - j)) != pixelRGB):
+    #        if (savedMousePos[0]-i,savedMousePos[1] -j) not in innerArray:
+    #            columnArray.append((savedMousePos[0]-i,savedMousePos[1]-j))  
+    # 
+    #        i += 1
+    #        firstRun = False
             
-      
+
 
     newImg = Image.new('RGB', (1920,1080))
-    for i in range (len(posArray)):
+    for i in range (len(innerArray)):
         if i == 0:
             continue
-        newImg.putpixel((posArray[i]), (255,0,255))
+        newImg.putpixel((innerArray[i]), (255,0,255))
         newImg.save
 
+    #firstX = 0
+    #secondX = 0
+    #lines = 0
+    ##get the last x position of line 1 and 2 that will be drawn
+    #for i in range(len(innerArray)):
+    #    if lines < 2:
+    #        if innerArray[i][1] != innerArray[i+1][1]:
+    #            if firstX == 0:
+    #                firstX = innerArray[i][0]
+    #                lines = 1
+    #            elif secondX == 0:
+    #                secondX = innerArray[i][0]
+    #                lines = 2
+    #    if lines >= 2:
+    #        break
+    #trend = 0
+    #find the difference of the last X positions to find trend
+    #trend = secondX - firstX
+    #print("Trend: ", trend)
 
+    #find the non clickable outer edge, using trend to find the half way point
+    #find end points
+    #use it to find the trend (trend is the difference for the last x of the first and second lines of pixels)
+    #also use the end points array to create the outer edge without checking over the inner square
+    for i in range(len(innerArray)):
+        try:
+            if innerArray[i][1] != innerArray[i+1][1]:
+                endPointsArray.append(innerArray[i])  
 
-    # Convert RGB to BGR 
+        except:
+            pass
+    print (len(innerArray))
 
+    trend = endPointsArray[1][0]- endPointsArray[0][0]
 
-   #for i in range(len(posArray)):
-   #    if innerLeft == None:
-   #        innerLeft = posArray[i]
-   #    if innerTop == None:
-   #        innerTop = posArray[i]
-   #    if innerRight == None:
-   #        innerRight = posArray[i]
-   #    if innerBottom == None:
-   #        innerBottom = posArray[i]
+    #creating the outer edge
+    for i in range(len(endPointsArray)):
+        j = 1
 
-   #        #if screenshot.getpixel((lowestY[0], lowestY[1] + pix +1)) != pixelRGB:
-   #    #find lowest X pos tuple
-   #    if innerLeft[0] > posArray[i][0]:  
-   #        innerLeft = posArray[i]
-   #        continue
-   #    
-   #    #find lowest Y pos tuple
+        x = endPointsArray[i][0]
+        y = endPointsArray[i][1]
+   
+        while screenshot.getpixel((x + j, y)) == pixelRGB:
+            j+=1
+            outerArray.append((x + j, y))
+    
+    lastMax_X = 0
+    breaking = False
+    #find the side center and cut everything else under in the outer array
+    new_outerArray = []
+    deleteNumber = 0
+    for i in range(len(outerArray)):
+        if lastMax_X != 0:
+        #    try:
+        #        if outerArray[i][0] - lastMax_X and lastMax_X != 0:
+        #            deleteNumber = i
+        #            print("i equals: ", i)
+        #            break
+        #        if outerArray[i][0] - lastMax_X > trend and lastMax_X != 0:
+        #            print("yes")
+        #    except:
+        #        pass
+            if outerArray[i][0] - lastMax_X > trend:
+                deleteNumber = i
+                break
+                #print("lastmax: ",  lastMax_X, "outerArray[i][0]: ",  outerArray[i][0])
 
-   #    if innerBottom[1] > posArray[i][1]:
-   #        innerBottom = posArray[i]
-   #        continue
-   #    
-   #    #find highest X pos tuple
-
-   #    if innerRight[0] < posArray[i][0]:
-   #        innerRight = posArray[i]
-   #        continue
-   #    
-   #    #find highest Y pos tuple
-
-   #    if innerTop [1] < posArray[i][1]:
-   #        innerTop  = posArray[i]
-   #        continue
+        try:
+            if outerArray[i][1] != outerArray[i+1][1]:
+                lastMax_X = outerArray[i][0]
+                #print("lastMax_x :", lastMax_X)
+        except:
+            pass
 
         
-    #newImg.putpixel((innerLeft), (255,0,255))
-    #newImg.save
-#
-    #newImg.putpixel((innerBottom), (255,0,255))
-    #newImg.save
-#
-    #newImg.putpixel((innerRight), (255,0,255))
-    #newImg.save
-#
-    #newImg.putpixel((innerTop), (255,0,255))
-    #newImg.save
+    
 
+
+
+    for i in range(len(outerArray)):
+        if i < deleteNumber:
+            new_outerArray.append(outerArray[i])
+    
+    outerArray = new_outerArray
+    
+
+
+    #for i in range(len(outerArray)):
+    #    if breaking == True:
+    #        print("break")
+    #        break
+    #    j = 1
+    #    it = 0
+    #    try:
+    #        if outerArray[i][1] != outerArray[i+1][1]:
+    #            lastMax_X = outerArray[i][0]
+    #            #print(lastMax_X)
+    #    except:
+    #        pass
+    #    try:
+    #        if outerArray[i][0] - lastMax_X > trend and lastMax_X != 0:
+    #        
+    #            print("outerArray: ", outerArray[i][0])
+    #            print("last Max: ", lastMax_X)
+    #        #print ("before deletion", len(outerArray))
+    #            lastRemove = 0
+    #            lastRemoveK = 0
+    #            for item in outerArray[:]):
+    #                print 
+    #                new_outerArray.remove(outerArray[i+k])
+    #                
+    #    except:
+    #        pass
+
+
+
+    #debug display square
+    #open_cv_image = np.array(newImg) 
+    #open_cv_image = open_cv_image[:, :, ::-1].copy()
+    #cv.imshow("newImg", open_cv_image)
+    #cv.waitKey(0)
+
+    #for the outer
+    #for left and right sides
+    #bottom right
+#bottom right
+   # i = 0
+    #j = 0
+  
+   #while (True):
+   #    i = 0
+   #    
+   #    if firstRun == False:
+   #        j += 1
+   #    while (screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] + j)) != pixelRGB):
+   #        i += 1
+   #        firstRun = False
+   #        
+   #    while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] + j)) == pixelRGB):
+   #        if doneInner == False:
+   #            doneInner = True
+   #            outerArray.append((savedMousePos[0]+i,savedMousePos[1] + j))
+   #    break
+##left side
+#    for val in range(len(innerArray)):
+#        try:
+#            if innerArray[val][1] != innerArray[val+1][1]:
+#                #print ("before: ",innerArray[val][0])
+#                #print ("after: ",innerArray[val][0]+1)
+#
+#                i = 1
+#
+#                while screenshot.getpixel((innerArray[val][0]-i, innerArray[val][1])) == pixelRGB:
+#                    #print("yay")
+#                    outerArray.append((innerArray[val][0]-i, innerArray[val][1]))
+#                    i += 1
+#        except:
+#            print (len(outerArray))
+#            break
+
+#corner right side 
+    #go the inner array 
+    #run = 1
+    #trend = 0
+    #t1 = 0
+    #t2 = 0
+#    for val in range(len(innerArray)):
+#        if run < 3:
+#            #need i to reset here so it resets every line (y)
+#            i = 1
+#            #check if the next x in the array has the colour we are looking for (boarder)
+#            #while it equals that colour
+#            while screenshot.getpixel((innerArray[val][0]+i, innerArray[val][1])) == pixelRGB:
+#                #add this value to our outerArray so we know the boarders
+#                outerArray.append((innerArray[val][0]+i, innerArray[val][1]))
+#                print("append")
+#                #this is for the extra number on the x
+#                i += 1
+#            if screenshot.getpixel((innerArray[val][0]+i-1, innerArray[val][1])) == pixelRGB and screenshot.getpixel((innerArray[val][0]+i, innerArray[val][1])) != pixelRGB:
+#                print("called, run")
+#                run +=1
+#           
+#            if run > 2:
+#                print('run > 2 inside')
+#                print(len(outerArray))
+#                #creates trend
+#                for trendVal in range(len(outerArray)):
+#                    
+#                    if trendVal == 0:
+#                        continue
+#                    if outerArray[trendVal-1][1] != outerArray[trendVal][1]:
+#                        if t1 != 0:
+#                            t2 = outerArray[trendVal-1][0]
+#                            trend = t1 - t2
+#                            print ('t1: ', t1, ' t2: ', t2)
+#                            break
+#                        if t1 == 0:
+#                            t1 = outerArray[trendVal-1][0]
+#            
+#        elif run > 2:
+#            i = 1
+#            #check if the next x in the array has the colour we are looking for (boarder)
+#            #while it equals that colour
+#            while screenshot.getpixel((innerArray[val][0]+i, innerArray[val][1])) == pixelRGB:
+#                #add this value to our outerArray so we know the boarders
+#                outerArray.append((innerArray[val][0]+i, innerArray[val][1]))
+#                #this is for the extra number on the x
+#                i += 1
+#            run +=1
+   
+    
+   # for val in range(len(innerArray)):
+   #     i = 1
+            #check if the next x in the array has the colour we are looking for (boarder)
+   #         #while it equals that colour
+        
+   ##     while screenshot.getpixel((innerArray[val][0]+i, innerArray[val][1])) == pixelRGB:
+                    #add this value to our outerArray so we know the boarders
+    #        #print("append")
+    #        #print (innerArray[val][1])
+            
+   #         outerArray.append((innerArray[val][0]+i, innerArray[val][1]))
+   #        
+    #        called = True
+#
+    #            #this is for the extra number on the x
+    #        i += 1
+
+
+
+
+    #trend = 0
+    #t1 = 0
+    #t2 = 0
+    #previousMax_X = 0
+    #runCounter = 1
+    #trendCounter = 0
+    #trendVal = 0
+    #for val in range(len(innerArray)):
+    #    i = 1
+    #    if runCounter < 3:
+    #        while screenshot.getpixel((innerArray[val][0]+i, innerArray[val][1])) == pixelRGB:
+    #            outerArray.append((innerArray[val][0]+i, innerArray[val][1]))    
+    #            i += 1
+    #            
+#
+    #            
+    #        #creates trend
+    #        for val in range(len(outerArray)):
+    #            if val == 0:
+    #                continue
+    #            if outerArray[val-1][1] != outerArray[val][1]:
+    #                if t1 != 0:
+    #                    t2 = outerArray[val-1][0]
+    #                    trend = t1 - t2
+    #                    print (t1, t2)
+    #                    break
+    #                if t1 == 0:
+    #                    t1 = outerArray[val-1][0]
+#
+    #       # runCounter += 1 
+    #    if runCounter > 2:
+    #        #print ("trend: ", trend)
+    #        while screenshot.getpixel((innerArray[val][0]+i, innerArray[val][1])) == pixelRGB:
+    #            
+    #            #outerArray.append((innerArray[val][0]+i, innerArray[val][1]))
+    #            for val in range(len(outerArray)):
+    #                if outerArray[val-1][1] != outerArray[val][1]:
+    #                    previousMax_X = outerArray[val-1][0]
+#
+    #                if innerArray[val][0]+i < previousMax_X:
+    #                    outerArray.append((innerArray[val][0]+i, innerArray[val][1]))
+    #                    i += 1
+    #                    runCounter += 1
+    #                    continue
+#
+    #                if innerArray[val][0]+i > previousMax_X and innerArray[val][0]+i < trend+1:
+    #                    outerArray.append((innerArray[val][0]+i, innerArray[val][1]))
+    #                    i += 1
+    #                    runCounter += 1
+    #                    continue
+#
+    #                if innerArray[val][0]+i < previousMax_X and innerArray[val][0]+i < trend+1:
+    #                    outerArray.append((innerArray[val][0]+i, innerArray[val][1]))
+    #                    i += 1
+    #                    runCounter += 1
+    #                    continue
+            
+        
+
+                    
+
+
+    ##DISTANCES FOR OUTTA EDGE
+    #BLTR_BOARDER = 0
+    #for val in range(len(outerArray)):
+    #    #if BLTR_BOARDER == 0:
+    #    #    BLTR_BOARDER = 1
+    #    #    continue
+    #    if outerArray[val][1] == outerArray[val+1][1]:
+    #        #print(outerArray[val][1])
+    #        BLTR_BOARDER += 1
+    #    if outerArray[val][1] != outerArray[val+1][1]:
+    #        BLTR_BOARDER += 1
+    #        BLTR_BOARDER -= 1
+    #       # print("size is: ", BLTR_BOARDER)
+    #        print('break')
+    #        break
+    
+
+    #TLBR_BOARDER = 0
+    ##startOfLine = True
+    ##Loop over the inner array
+    #halfWay = False
+    #for i in range(len(innerArray)):
+    #    
+    #    if halfWay == False:
+    #        #if next pixel's Y is not the same as last, its on a new line
+    #        try:
+    #            if innerArray[i][1] != innerArray[i+1][1]:
+    #                #print("First Check: ", "Inner1Y: ", innerArray[i][1], " Inner2Y: ",innerArray[i+1][1] )
+    #                #loop over again as now we are checking to see if the X's values are the same
+    #                #loop over and find when the next one isn;t the same
+    #                firstCheckX = innerArray[i][0]
+    #                
+    #                #print ("firstCheckX: ", firstCheckX )
+    #                for k in range(innerArray[i+1][1]):
+    #                    
+    #                    #last x on next row
+    #                    if innerArray[i+1][1] != innerArray[i+2][1]:
+#
+    #                    #check X values
+    #                    #if the x are the same, that means we have hit half way
+    #                        if firstCheckX == innerArray[i+1][0]:
+    #                            #print("found") 
+    #                            pass
+    #                        elif firstCheckX != innerArray[i+1][0]:
+    #                            #print("not same firstCheckX: ", firstCheckX , " +1: ", innerArray[i+1][0])
+    #                            pass
+    #        except:
+    #            print("done")
+    #    elif halfWay == True:
+    #        pass
+
+
+#
+        #    if innerArray[val][1] != innerArray[val+1][1]:
+        #        #print ("before: ",innerArray[val][0])
+        #        #print ("after: ",innerArray[val][0]+1)
+#
+        #        i = 1
+#
+        #        while screenshot.getpixel((innerArray[val][0]+i, innerArray[val][1])) == pixelRGB:
+        #            #print("yay")
+        #            outerArray.append((innerArray[val][0]+i, innerArray[val][1]))
+        #            
+        #            i += 1
+        #except:
+        #    print (len(outerArray))
+        #    break
+
+    for val in range(len(columnArray)):    
+            try:
+                if columnArray[val][1] != columnArray[val+1][1]:
+                    #print ("before: ",innerArray[val][0])
+                    #print ("after: ",innerArray[val][0]+1)
+
+                    i = 1
+
+                    while screenshot.getpixel((columnArray[val][0]+i, columnArray[val][1])) == pixelRGB:
+                        #print("yay")
+                        #outerArray.append((columnArray[val][0]+i, columnArray[val][1]))
+
+                        i += 1
+            except:
+
+                break
+        
+
+
+#while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] - j)) != pixelRGB and onOuter == False or
+#           screenshot.getpixel((savedMousePos[0], savedMousePos[1] - j)) == pixelRGB):
+
+    #i = 0
+    #j = 0
+#
+    #firstRun = True
+    #onOuter = False
+    #finishedLine = False
+    #lastRun = False
+    #while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] - j)) != pixelRGB):
+    #    i = 0
+    #    if firstRun == False:
+    #        j += 1
+    #    if finishedLine == False:
+    #        print("finsihed line was false")
+    #        while screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] + j)) != pixelRGB:
+    #            #if we go on non colour after colour
+    #            if onOuter == True:
+    #                finishedLine = True
+    #                print("finsihed line = True")
+    #                break
+    #            i += 1
+    #            firstRun = False
+    #        while screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] + j)) == pixelRGB:
+    #            onOuter = True
+    #            outerArray.append((savedMousePos[0]+i,savedMousePos[1] + j))
+    #            print("outer append")
+    #            i += 1
+#
+    #            break
+    #    if finishedLine == True:
+    #        print("finsihed line was true")
+    #        
+    #        print("lastRun = True")
+    #        if screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] + j)) == pixelRGB:
+    #            lastRun = True
+    #            while screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] + j)) == pixelRGB:
+    #                outerArray.append((savedMousePos[0]+i,savedMousePos[1] + j))
+    #                print("outer append 2")
+    #                i += 1
+    #    if screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] + j)) != pixelRGB and lastRun == True:
+    #        print("break")
+    #        break
+
+    
+    #newImg = Image.new('RGB', (1920,1080))
+    for i in range (len(outerArray)):
+        if i == 0:
+            continue
+        newImg.putpixel((outerArray[i]), (0,0,255))
+        newImg.save
+
+    for i in range (len(columnArray)):
+        if i == 0:
+            continue
+        newImg.putpixel((columnArray[i]), (255,0,0))
+        newImg.save
+
+    #debug display square
+    
     open_cv_image = np.array(newImg) 
     open_cv_image = open_cv_image[:, :, ::-1].copy()
     cv.imshow("newImg", open_cv_image)
     cv.waitKey(0)
+        
 
-    square.setPoints(innerLeft, innerTop, innerRight, innerBottom)
-
-    #for the outer
-    #for left and right sides
-    #find the left point or right point
-    #find the next inner across from the current clickable square (so inbetween)
     #divide the x pos, that the no clickable left and right side
     
     #for top and bottom sides
@@ -558,9 +1016,12 @@ def createDefaultSquare2(square):
     #finds the inner
     #saves the outer and inner positions
     #when placeing squares, outer must overlap
+    square.setPoints(innerLeft, innerTop, innerRight, innerBottom)
 
-    
-    pass
+
+def getMax_X_ValueInY(RGB, listOfPixels):
+    for i in range (len(listOfPixels)):
+        print ("rgb: ",listOfPixels[i])         
 
 def createDefaultSquare(square):
     #purple colour code
