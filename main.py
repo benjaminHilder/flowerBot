@@ -104,14 +104,14 @@ def main():
 
     #addSqaure(SquarePos.bottom_right, baseSquare,  baseSquare, True, (255,0,255))
     
-    #addMultipleSqauresWithFakes(SquarePos.bottom_left, baseSquare, 10, (255,0,255))
-    #addMultipleSqaures(SquarePos.bottom_right, baseSquare, 10, (255,0,255))
+    addMultipleSqauresWithFakes(SquarePos.bottom_left, baseSquare, 10, (255,0,255))
+    addMultipleSqaures(SquarePos.bottom_right, baseSquare, 10, (255,0,255))
     #addMultipleSqauresWithFakes(SquarePos.top_right, baseSquare, 5, (255,0,255))
     #addMultipleSqauresWithFakes(SquarePos.top_right, baseSquare, 5, (255,0,255))
 
     
     #drawDebug
-    #drawDiamonds(blank)
+    drawDiamonds(blank)
     #drawDiamond(blank, baseSquare.leftPoint, baseSquare.topPoint, baseSquare.rightPoint, baseSquare.bottomPoint,  (166, 107, 208), thickness=1)
     #drawDiamond(blank, newSqaure.leftPoint, newSqaure.topPoint, newSqaure.rightPoint, newSqaure.bottomPoint, (68,190,255),  thickness=1)
     #cv.imshow('1 sqaure', blank)
@@ -165,9 +165,9 @@ def main():
 
     #print (squareList[0].leftPoint[0])
     cv.waitKey(0)
-    #for i, sqaure in enumerate(squareList):
-        #if squareList[i].realSquare == True:
-                #moveClickSquare(squareList[i], 1)
+    for i, sqaure in enumerate(squareList):
+        if squareList[i].realSquare == True:
+                moveClickSquare(squareList[i], 1)
     #for i, sqaure in enumerate(squareList):
          #moveClick(squareList[i].rightPoint[0],squareList[i].rightPoint[1], 1)
          #moveClick(squareList[i].topPoint[0],squareList[i].topPoint[1], 1)
@@ -591,6 +591,8 @@ def createDefaultSquare2(square):
             pass
 
     trend = endPointsArray[1][0]- endPointsArray[0][0]
+    if trend != 2:
+        return
     print ('trend:', trend)
 
     #creating the outer edge
@@ -749,10 +751,20 @@ def createDefaultSquare2(square):
     topSidePlusBoarder = 0
     rightSidePlusBoarder = 0
     bottomSidePlusBoarder = 0
+    distanceOfBoarder = endPointsArrayOuter[1][0] - endPointsArray[1][0]-1
+
+    leftSidePlusBoarder = (innerSqaureCornerLeft[0] - distanceOfBoarder, innerSqaureCornerLeft[1])
+    topSidePlusBoarder = (innerSqaureCornerUpper[0], innerSqaureCornerUpper[1] - distanceOfBoarder)
+    rightSidePlusBoarder = (innerSqaureCornerRight[0] + distanceOfBoarder,innerSqaureCornerRight[1])
+    bottomSidePlusBoarder = (innerSqaureCornerLower[0], innerSqaureCornerLower[1] + distanceOfBoarder)
 
 
+    square.setPoints(leftSidePlusBoarder, topSidePlusBoarder, rightSidePlusBoarder, bottomSidePlusBoarder)
+    
+    print ("distance of boarder", distanceOfBoarder)
+    
 
-    square.setPoints()
+    #square.setPoints()
     
     newImg.putpixel((innerSqaureCornerRight), (26,206,255))
     newImg.save
@@ -783,6 +795,8 @@ def createDefaultSquare2(square):
     #cv.waitKey(0)
         
 
+
+
     #divide the x pos, that the no clickable left and right side
     
     #for top and bottom sides
@@ -792,7 +806,7 @@ def createDefaultSquare2(square):
     #finds the inner
     #saves the outer and inner positions
     #when placeing squares, outer must overlap
-    square.setPoints(innerLeft, innerTop, innerRight, innerBottom)
+    #square.setPoints(innerLeft, innerTop, innerRight, innerBottom)
 
 
 def getMax_X_ValueInY(RGB, listOfPixels):
