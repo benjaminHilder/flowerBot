@@ -1,6 +1,7 @@
 from io import DEFAULT_BUFFER_SIZE
 from sys import _debugmallocstats, exec_prefix, flags
 from PyQt5.QtGui import QPainter
+from numpy.core.numeric import outer
 #from enb_bot.image_bot.recorder import OUTPUT_FILENAME
 from square import Square
 import pyautogui
@@ -25,8 +26,10 @@ newSqaure = Square()
 squareBoarderX = 0
 squareBoarderY = 0
 
-
-
+innerSqaureCornerLeft  = 0
+innerSqaureCornerRight = 0
+innerSqaureCornerUpper = 0
+innerSqaureCornerLower = 0
 
 blank = np.zeros((1080,1920,3), dtype='uint8')
 
@@ -508,6 +511,22 @@ def createDefaultSquare2(square):
             innerArray.append((savedMousePos[0]-i,savedMousePos[1] - j))
             firstRun = False
             i += 1
+
+    #top left column    
+    i = 0 
+    j = 0 
+    firstRun = True
+    while (screenshot.getpixel((savedMousePos[0] - j, savedMousePos[1])) != pixelRGB):
+        i = 0
+        if firstRun == False:
+            j += 1
+        while (screenshot.getpixel((savedMousePos[0] - j, savedMousePos[1] - i)) != pixelRGB):
+            if (savedMousePos[0]-j,savedMousePos[1] - i) not in innerArray:
+                columnArray.append((savedMousePos[0]-j,savedMousePos[1] - i))
+                if firstRun:
+                    columnArray.append((savedMousePos[0]-j,savedMousePos[1] - i))  
+            i += 1
+            firstRun = False
     #top right
     i = 0
     j = 0
@@ -522,18 +541,40 @@ def createDefaultSquare2(square):
             firstRun = False
             i += 1
 
+    #top right column    
+    i = 0 
+    j = 0 
+    firstRun = True
+    while (screenshot.getpixel((savedMousePos[0] - j, savedMousePos[1])) != pixelRGB):
+        i = 0
+        if firstRun == False:
+            j += 1
+        while (screenshot.getpixel((savedMousePos[0] + j, savedMousePos[1] - i)) != pixelRGB):
+            if (savedMousePos[0]+j,savedMousePos[1] - i) not in innerArray:
+                columnArray.append((savedMousePos[0]+j,savedMousePos[1] - i))
+                if firstRun:
+                    columnArray.append((savedMousePos[0]+j,savedMousePos[1] - i))  
+            i += 1
+            firstRun = False
 
-    #sorting inner list 
+    combinedInnerList = []
+    #sort inner
     yMin2Max = lambda y: y[1]
-    innerArray.sort(key=yMin2Max)
+
+    for i in range(len(columnArray)):
+        combinedInnerList.append(columnArray[i])
+    for i in range(len(innerArray)):
+        combinedInnerList.append(innerArray[i])
+    
+    combinedInnerList.sort(key=yMin2Max)
 
     #create new image for debug
     newImg = Image.new('RGB', (1920,1080))
     #add inner array to image
-    for i in range (len(innerArray)):
+    for i in range (len(combinedInnerList)):
         if i == 0:
             continue
-        newImg.putpixel((innerArray[i]), (255,0,255))
+        newImg.putpixel((combinedInnerList[i]), (255,0,255))
         newImg.save
 
     #find the non clickable outer edge, using trend to find the half way point
@@ -541,15 +582,16 @@ def createDefaultSquare2(square):
     #use it to find the trend (trend is the difference for the last x of the first and second lines of pixels)
     #also use the end points array to create the outer edge without checking over the inner square
 
-    for i in range(len(innerArray)):
+    for i in range(len(combinedInnerList)):
         try:
-            if innerArray[i][1] != innerArray[i+1][1]:
-                endPointsArray.append(innerArray[i]) 
+            if combinedInnerList[i][1] != combinedInnerList[i+1][1]:
+                endPointsArray.append(combinedInnerList[i]) 
 
         except:
             pass
 
     trend = endPointsArray[1][0]- endPointsArray[0][0]
+    print ('trend:', trend)
 
     #creating the outer edge
     for i in range(len(endPointsArray)):
@@ -561,6 +603,8 @@ def createDefaultSquare2(square):
         while screenshot.getpixel((x + j, y)) == pixelRGB:
             j+=1
             outerArray.append((x + j, y))
+    #add first pixel 
+    outerArray.insert(0, (outerArray[0][0]-1,outerArray[0][1]))
     
     lastMax_X = 0
     #find the side center and cut everything else under in the outer array
@@ -570,6 +614,8 @@ def createDefaultSquare2(square):
         if lastMax_X != 0:
 
             if outerArray[i][0] - lastMax_X > trend:
+                #continue
+                
                 deleteNumber = i
                 break
 
@@ -582,24 +628,69 @@ def createDefaultSquare2(square):
     for i in range(len(outerArray)):
         if i < deleteNumber:
             new_outerArray.append(outerArray[i])
+        
+
     
     outerArray = new_outerArray
+    
+    #get how many are in a row
+    itNum = 0
+    for i in range(len(outerArray)):
+        if outerArray[i][1] == outerArray[0][1]:
+            itNum += 1
+        else:
+            break
+    #add to the top
+    for i in range(itNum):
+        outerArray.append((outerArray[i][0]-1,outerArray[i][1]-1))
+
+
+    #combinedOuter = []
+    #for i in range(len(columnArray)):
+    #    combinedOuter.append(columnArray[i])
+        
+    #for i in range(len(outerArray)):
+    #    combinedOuter.append(outerArray[i])
 
     #boarder x
     for i in range(len(outerArray)):
         try:
             if outerArray[i][1] != outerArray[i+1][1]:
                 endPointsArrayOuter.append(outerArray[i]) 
-                print("found")
+                #print("found")
 
         except:
             pass
-    squareBoarderX = endPointsArrayOuter[1][0] - endPointsArray[1][0]-1
 
-    innerSqaureCornerLeft = 0
-    innerSqaureCornerRight = 0
-    innerSqaureCornerUpper = 0
-    innerSqaureCornerLower = 0
+    #add to the bottom
+    maxY = endPointsArrayOuter[-1][1]
+    startX = 0
+    #for i
+    print (maxY)
+    lastNaturalLine = []
+    
+    for i in range(len(outerArray)):
+
+        if outerArray[i][1] == maxY:
+            if (outerArray[i][0],outerArray[i][1] )> (outerArray[i][0],outerArray[i][1-1]):
+                for k in range(itNum):
+                    lastNaturalLine.append((outerArray[k][0], outerArray[i][1]))
+                    #print("isFinal: ", maxY)
+                    #outerArray.append((outerArray[k][0], outerArray[i][1]+1))
+        
+    #squareBoarderX = endPointsArrayOuter[1][0] - endPointsArray[1][0]-1
+
+    innerSqaureCornerUpper = combinedInnerList[1]
+    innerSqaureCornerLower = combinedInnerList[-2]
+
+    #work out sides
+    #rightside
+    currentHighest = [0,0]
+    for points in endPointsArray:
+        if points[0] > currentHighest[0]:
+            currentHighest = points
+            #print (currentHighest)
+    innerSqaureCornerRight = currentHighest
 
     for val in range(len(columnArray)):    
             try:
@@ -617,6 +708,19 @@ def createDefaultSquare2(square):
             except:
 
                 break
+    
+    #left inner sqaure corner
+    try:
+        for i in range(len(combinedInnerList)):
+
+                if (innerSqaureCornerRight[0]-i, innerSqaureCornerRight[1]) in combinedInnerList:
+                    innerSqaureCornerLeft = (innerSqaureCornerRight[0]-i, innerSqaureCornerRight[1])
+                #print ("i:", i)
+
+    except:
+            pass
+            
+
 
     for i in range (len(outerArray)):
         if i == 0:
@@ -635,19 +739,48 @@ def createDefaultSquare2(square):
             continue
         newImg.putpixel((endPointsArray[i]), (47,70,34))
         newImg.save
+    for i in range (len(lastNaturalLine)):
+            if i == 0:
+                continue
+            newImg.putpixel((lastNaturalLine[i]), (47,70,34))
+            newImg.save
 
-    for i in range (len(columnArray)):
-        if i == 0:
-            continue
-        newImg.putpixel((columnArray[i]), (255,0,0))
-        newImg.save
+    leftSidePlusBoarder = 0
+    topSidePlusBoarder = 0
+    rightSidePlusBoarder = 0
+    bottomSidePlusBoarder = 0
+
+
+
+    square.setPoints()
+    
+    newImg.putpixel((innerSqaureCornerRight), (26,206,255))
+    newImg.save
+    newImg.putpixel((innerSqaureCornerLeft), (26,206,255))
+    newImg.save
+    newImg.putpixel((innerSqaureCornerUpper), (26,206,255))
+    newImg.save
+    newImg.putpixel((innerSqaureCornerLower), (26,206,255))
+    newImg.save
+
+    newImg.putpixel((outerArray[deleteNumber-1]), (255,186,165))
+    newImg.save
+    newImg.putpixel((outerArray[1]), (255,186,165))
+    newImg.save
+
+    #for i in range (len(columnArray)):
+    #    if i == 0:
+    #        continue
+    #    newImg.putpixel((columnArray[i]), (255,0,0))
+    #    newImg.save
+        
 
     #debug display square
     
-    open_cv_image = np.array(newImg) 
-    open_cv_image = open_cv_image[:, :, ::-1].copy()
-    cv.imshow("newImg", open_cv_image)
-    cv.waitKey(0)
+    #open_cv_image = np.array(newImg) 
+    #open_cv_image = open_cv_image[:, :, ::-1].copy()
+    #cv.imshow("newImg", open_cv_image)
+    #cv.waitKey(0)
         
 
     #divide the x pos, that the no clickable left and right side
