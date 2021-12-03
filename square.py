@@ -26,6 +26,7 @@ class Square:
 
     def setPoints(self, point1, point2, point3, point4):
         self.leftPoint = point1
+        print ("point1: ", point1)
         self.topPoint = point2
         self.rightPoint = point3
         self.bottomPoint = point4
