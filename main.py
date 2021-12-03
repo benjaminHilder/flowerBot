@@ -16,6 +16,7 @@ from math import sqrt
 import os
 import time
 from threading import Timer
+import math
 
 script_dir = os.path.dirname(__file__)
 
@@ -85,7 +86,7 @@ class SquarePos(Enum):
 def main():
     countdownTimer()
     baseSquare.realSquare = True
-    createDefaultSquare3(baseSquare)
+    createDefaultSquare4(baseSquare)
     squareList.append(baseSquare)
     #squareList.append(newSqaure)
     #try:
@@ -409,6 +410,195 @@ def SqCenterPoint(square):
 def drawDiamonds(canvas):
     drawAllDiamonds(blank)
     cv.imshow('1 sqaure', blank)
+def createDefaultSquare4(square):
+    currentLeftSide = [0,0]
+    currentTopSide = [0,0]
+    currentRightSide = [0,0]
+    currentBottomSide = [0,0]
+
+    innerLeftSide = [0,0]
+    innerTopSide = [0,0]
+    innerRightSide = [0,0]
+    innerBottomSide = [0,0]
+
+    outterLeftSide = [0,0]
+    outterTopSide = [0,0]
+    outterRightSide = [0,0]
+    outterBottomSide = [0,0]
+
+    finalLeftSide = [0,0]
+    finalTopSide = [0,0]
+    finalRightSide = [0,0]
+    finalBottomSide = [0,0]
+
+    boarderRGB = (255, 190, 68)
+
+    savedMousePositon = pyautogui.position()
+    pyautogui.moveTo(543,1911)
+    
+    screenshot = pyautogui.screenshot()
+
+    #from saved mouse pos search for right side
+
+    for i in range(9999):
+        if screenshot.getpixel((savedMousePositon[0] + i, savedMousePositon[1])) != boarderRGB:
+            currentRightSide = [savedMousePositon[0] + i, savedMousePositon[1]]
+        else:
+            break
+
+    #once at far right side
+    pyautogui.moveTo(currentRightSide[0],currentRightSide[1] , 2)
+
+  
+        #check where the the colour is above and below
+
+    above = [currentRightSide[0], currentRightSide[1]]
+    below = [currentRightSide[0], currentRightSide[1]]
+
+    #above
+    for i in range(9999):
+        if screenshot.getpixel((currentRightSide[0], currentRightSide[1]-i)) != boarderRGB:
+            above = [currentRightSide[0], currentRightSide[1]-i]
+        else: 
+            break
+    #below        
+    for i in range(9999):
+        if screenshot.getpixel((currentRightSide[0], currentRightSide[1]+i)) != boarderRGB:
+            below = [currentRightSide[0], currentRightSide[1]+i]
+        else: 
+            break
+
+    aboveCheck = currentRightSide[1] - above[1]
+    belowCheck =  below[1] - currentRightSide[1]
+
+
+    #if boarder is above, try 1 down 2 right
+    if aboveCheck < belowCheck:
+        for i in range(9999):
+            for k in range(9999):
+                
+                if screenshot.getpixel((currentRightSide[0]+1, currentRightSide[1])) == boarderRGB and screenshot.getpixel((currentRightSide[0],currentRightSide[1]+1 )) != boarderRGB:
+                    currentRightSide[1] += 1
+                    pyautogui.moveTo(currentRightSide[0],currentRightSide[1], 0.001)
+                    #print(1)
+                else: 
+                    break
+            for j in range(9999):
+                if screenshot.getpixel((currentRightSide[0] + 1, currentRightSide[1])) != boarderRGB:
+                    currentRightSide[0] += 1
+                    pyautogui.moveTo(currentRightSide[0],currentRightSide[1], 0.001)
+                    #print(2)
+                else:
+                    break
+
+    #put in parking spot
+        for j in range(9999):
+            if screenshot.getpixel((currentRightSide[0],currentRightSide[1]-1 )) !=boarderRGB:
+                currentRightSide[1]-=1
+                innerRightSide = currentRightSide
+                pyautogui.moveTo(currentRightSide[0],currentRightSide[1], 0.001)
+            else:
+                break
+
+    #if boarder is below, try 1 up and 2 right 
+    if belowCheck < aboveCheck:
+        for i in range(9999):
+            for k in range(9999):
+                
+                if screenshot.getpixel((currentRightSide[0]+1, currentRightSide[1])) == boarderRGB and screenshot.getpixel((currentRightSide[0],currentRightSide[1]-1 )) != boarderRGB:
+                    currentRightSide[1] -= 1
+                    pyautogui.moveTo(currentRightSide[0],currentRightSide[1], 0.001)
+                    #print(1)
+                else: 
+                    break
+            for j in range(9999):
+                if screenshot.getpixel((currentRightSide[0] + 1, currentRightSide[1])) != boarderRGB:
+                    currentRightSide[0] += 1
+                    pyautogui.moveTo(currentRightSide[0],currentRightSide[1], 0.001)
+                    #print(2)
+                else:
+                    break
+    #put in parking spot
+        for j in range(9999):
+            if screenshot.getpixel((currentRightSide[0],currentRightSide[1]+1 )) !=boarderRGB:
+                currentRightSide[1]+=1
+                innerRightSide = currentRightSide
+                pyautogui.moveTo(currentRightSide[0],currentRightSide[1], 0.001)
+            else:
+                break
+
+    #if boarder is under or above this is then this is the right side
+        #sorted with parking 
+
+    #once right side is complete
+    #from right side, travel backwards on the x to find left side
+    currentLeftSide = currentRightSide
+    for i in range(9999):
+        if screenshot.getpixel((currentLeftSide[0]-1, currentLeftSide[1])) != boarderRGB:
+            currentLeftSide = [currentLeftSide[0]-1, currentLeftSide[1]]
+            pyautogui.moveTo(currentLeftSide[0], currentLeftSide[1], 0.001)
+        else:
+            break
+    #pyautogui.moveTo(currentLeftSide[0], currentLeftSide[1], 0.001)
+    #once you hit the boarder this is left side
+    innerLeftSide = currentLeftSide
+    #divide the distance between rightside x and leftside x by 2
+    distXRL = innerRightSide[0] - innerLeftSide[0]
+    print("distXRL: ", distXRL)
+    divXRL = distXRL/2
+
+    print("divXRL: ", math.floor(divXRL))
+    pyautogui.moveTo(innerLeftSide[0] + divXRL, currentLeftSide[1], 0.001)
+
+    #from here travel the y up and down until you reach the boarder
+    #Top
+    currentTopSide = [innerLeftSide[0] + divXRL, currentLeftSide[1]]
+
+    for i in range(9999):
+        if screenshot.getpixel((currentTopSide[0],currentTopSide[1] -1)) != boarderRGB:
+            currentTopSide[1] -= 1
+            pyautogui.moveTo(currentTopSide[0], currentTopSide[1], 0.001)
+            print("top1")
+        else:
+            break
+    #put in parking spot
+    for j in range(9999):
+        if screenshot.getpixel((currentTopSide[0]-1,currentTopSide[1])) !=boarderRGB:
+            currentTopSide[0]-=1
+            innerTopSide = currentTopSide
+            pyautogui.moveTo(innerTopSide[0],innerTopSide[1], 0.001)
+            print("top2")
+        else:
+            break
+    currentBottomSide = [innerLeftSide[0] + divXRL, currentLeftSide[1]]
+    #Bottom
+    for i in range(9999):
+        if screenshot.getpixel((currentBottomSide[0], currentBottomSide[1] + 1)) != boarderRGB:
+            currentBottomSide[1] += 1
+            pyautogui.moveTo(currentBottomSide[0], currentBottomSide[1], 0.001)
+        else:
+            break
+    #put in parking spot
+    for j in range(9999):
+        if screenshot.getpixel((currentBottomSide[0]-1,currentBottomSide[1])) !=boarderRGB:
+            currentBottomSide[0]-=1
+            innerBottomSide = currentBottomSide
+            pyautogui.moveTo(innerBottomSide[0],innerBottomSide[1], 0.001)
+        else:
+            break   
+    #once reached these are the up and down pos of the sqaure
+    #check if there is any space next to the up and down positions
+
+    #for the boarders
+    #go from these positions and find all the pixels of the boarder 
+    # (for example, on the rightside check x+, leftside check x-)
+    #if the number is even 
+        # divide by 2 and thats the boarder number
+        #add this with the correct side and this is the total number, create a sqaure with this
+    #if the number is uneven
+    square.setPoints
+
+
 def createDefaultSquare3(square):
     leftCornerInside = [0,0]
     topCornerInside = [0,0]
@@ -442,19 +632,59 @@ def createDefaultSquare3(square):
 
     #once at far right side
     pyautogui.moveTo(currentRightSide[0],currentRightSide[1] , 2)
-    high, low = getColourHighLow(currentRightSide[0], currentRightSide[1])
 
-    pyautogui.moveTo(currentRightSide[0], high)
-    if screenshot.getpixel((currentRightSide[0], high-1)) == boarderRGB:
-        print("high")
-    if screenshot.getpixel((currentRightSide[0], low+1)) == boarderRGB:
-       print("low")
+    #high, low = getColourHighLow(currentRightSide[0], currentRightSide[1])
+    #left, right = getColourLeftRight(currentRightSide[0], currentRightSide[1])
+    left, high, right, low = getColourSquarePos(screenshot, currentRightSide[0], currentRightSide[1])
     
-    #if boarder is above, try 1 down 2 right
-        #if so, this is new right side and repeat until this is not true
+    distX = right - left
+    if distX == 0:
+        distX = 1
+    distY = low - high
+    if distY == 0:
+        distY = 1
+    print ("left: ", left, "high: ", high, "right: ", right, "low: ", low)
+    #pyautogui.moveTo(currentRightSide[0], high)
+    #if screenshot.getpixel((currentRightSide[0], high-1)) == boarderRGB:
+    #    print("high")
+    #if screenshot.getpixel((currentRightSide[0], low+1)) == boarderRGB:
+    #   print("low")
 
-     #if boarder is below, try 1 up and 2 right    
-        #if so, this is new right side and repeat until this is not true
+    #if screenshot.getpixel((left-1, currentRightSide[1])) == boarderRGB:
+     #   print("left")
+    #if screenshot.getpixel((right+1, currentRightSide[1])) == boarderRGB:
+    #    print("right")
+    
+    #for i in range (1, 10):
+    #    if i == 0:
+    #        continue
+    #    moveX = distX * i
+    #    pyautogui.moveTo(currentRightSide[0] + moveX, currentRightSide[1],2)
+    #    print("moved")    
+
+    #if boarder is above, try 1 down 2 right
+    print("current pos: ", currentRightSide)
+    #for i in range (3):
+    #    pyautogui.moveTo(currentRightSide[0]+squareLeftPos(distX, i), currentRightSide[1], 3)
+    #    print("new pos: ", (currentRightSide[0]+squareLeftPos(distX, i), currentRightSide[1]))
+    print("old currentX: ",currentRightSide[0])
+
+    squareMoveUp(distY, currentRightSide[0], currentRightSide[1],10, 2)
+    
+    #squareMoveRight(distX, currentRightSide[0], currentRightSide[1],1, 3)
+    #squareMoveUp(distY, currentRightSide[0], currentRightSide[1],1, 3)
+    #squareMoveDown(distY, currentRightSide[0], currentRightSide[1],1, 3)
+    
+    #if screenshot.getpixel((currentRightSide[0], high-1)) == boarderRGB:
+        
+       # pass
+        #\if so, this is new right side and repeat until this is not true
+        
+    
+   #  #if boarder is below, try 1 up and 2 right 
+   # if screenshot.getpixel((currentRightSide[0], low+1)) == boarderRGB:
+   #     #if so, this is new right side and repeat until this is not true
+   #     pass
 
     #if boarder is under or above this is then this is the right side
 
@@ -483,34 +713,98 @@ def createDefaultSquare3(square):
         # divide by 2 and thats the boarder number
         #add this with the correct side and this is the total number, create a sqaure with this
     #if the number is uneven 
+def getSquareCenter(distX, distY, currentX, currentY):
+    pass
 
-def getColourHighLow(x,y):
-    screenshot = pyautogui.screenshot()
-    Colour = screenshot.getpixel((x, y))
+def getSquareTopLeftCorner(leftX, upY):
+    return (leftX, upY)
+def getSquareTopRightCorner(rightX, upY):
+    return(rightX, upY)
+def getSquareBottomLeftCorner(leftX, bottomY):
+    return(leftX, bottomY)
+def getSquareBottomRightCorner(rightX, bottomY):
+    return(rightX, bottomY)
+
+def squareMoveLeft(distX, currentX, currentY, times = 1, howFast = 0):
+    pyautogui.moveTo(currentX + squareLeftPos(distX, times), currentY, howFast)
+
+def squareMoveUp(distY, currentX, currentY, times = 1, howFast = 0):
+    pyautogui.moveTo(currentX, currentY + squareUpPos(distY, times), howFast)
+
+def squareMoveRight(distX, currentX, currentY, times = 1, howFast = 0):
+    pyautogui.moveTo(currentX + squareRightPos(distX, times), currentY, howFast)
+
+def squareMoveDown(distY, currentX, currentY, times = 1, howFast = 0):
+    pyautogui.moveTo(currentX, currentY + squareDownPos(distY, times), howFast)
+
+def squareLeftPos(distX, times = 1):
+    newX = distX * times
+    return(-newX)
+def squareUpPos(distY, times = 1):
+    newY = distY * times
+    return(-newY)
+def squareRightPos(distX, times = 1):
+    newX = distX * times
+    return(newX)
+def squareDownPos(distY, times = 1):
+    newY = distY * times
+    return(+newY)
+    
+def getColourSquarePos(img, x,y):
+    high, low = getColourHighLow(img,x,y)
+    left, right = getColourLeftRight(img,x,y)
+    
+    return (left, high, right, low)
+def getColourHighLow(img, x,y):
+    
+    Colour = img.getpixel((x, y))
 
     high = 0
     low = 0
     
     for i in range(999):
-        if screenshot.getpixel((x,y-i)) == Colour:
+        if img.getpixel((x,y-i)) == Colour:
                 continue
         else:
              high = y-i+1
-             print(high)
+
              break
 
     for i in range(999):
-        if screenshot.getpixel((x,y+i)) == Colour:
+        if img.getpixel((x,y+i)) == Colour:
                 continue
         else:
              low = y+i-1
-             print(low)
+
              break
 
     return(high, low)
 
+def getColourLeftRight(img, x,y):
+    
+    Colour = img.getpixel((x, y))
 
+    left = 0
+    right = 0
 
+    for i in range(999):
+        if img.getpixel((x-i,y)) == Colour:
+            continue
+        else:
+            left = x-i+1
+            print(img.getpixel((x-i+1, y)))
+            
+            break
+
+    for i in range(999):
+        if img.getpixel((x+i,y)) == Colour:
+            continue
+        else:
+            right = x+i-1
+            print("colour we want ",Colour)
+            break
+
+    return(left, right)
 
 
 #def createColourSquareSize(x,y):
