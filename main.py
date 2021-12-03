@@ -85,7 +85,7 @@ class SquarePos(Enum):
 def main():
     countdownTimer()
     baseSquare.realSquare = True
-    createDefaultSquare2(baseSquare)
+    createDefaultSquare3(baseSquare)
     squareList.append(baseSquare)
     #squareList.append(newSqaure)
     #try:
@@ -104,14 +104,14 @@ def main():
 
     #addSqaure(SquarePos.bottom_right, baseSquare,  baseSquare, True, (255,0,255))
     
-    addMultipleSqauresWithFakes(SquarePos.bottom_left, baseSquare, 10, (255,0,255))
-    addMultipleSqaures(SquarePos.bottom_right, baseSquare, 10, (255,0,255))
+   # addMultipleSqauresWithFakes(SquarePos.bottom_left, baseSquare, 10, (255,0,255))
+  #  addMultipleSqaures(SquarePos.bottom_right, baseSquare, 10, (255,0,255))
     #addMultipleSqauresWithFakes(SquarePos.top_right, baseSquare, 5, (255,0,255))
     #addMultipleSqauresWithFakes(SquarePos.top_right, baseSquare, 5, (255,0,255))
 
     
     #drawDebug
-    drawDiamonds(blank)
+    #drawDiamonds(blank)
     #drawDiamond(blank, baseSquare.leftPoint, baseSquare.topPoint, baseSquare.rightPoint, baseSquare.bottomPoint,  (166, 107, 208), thickness=1)
     #drawDiamond(blank, newSqaure.leftPoint, newSqaure.topPoint, newSqaure.rightPoint, newSqaure.bottomPoint, (68,190,255),  thickness=1)
     #cv.imshow('1 sqaure', blank)
@@ -164,10 +164,10 @@ def main():
     
 
     #print (squareList[0].leftPoint[0])
-    cv.waitKey(0)
-    for i, sqaure in enumerate(squareList):
-        if squareList[i].realSquare == True:
-                moveClickSquare(squareList[i], 1)
+    #cv.waitKey(0)
+    #for i, sqaure in enumerate(squareList):
+    #    if squareList[i].realSquare == True:
+    #            moveClickSquare(squareList[i], 1)
     #for i, sqaure in enumerate(squareList):
          #moveClick(squareList[i].rightPoint[0],squareList[i].rightPoint[1], 1)
          #moveClick(squareList[i].topPoint[0],squareList[i].topPoint[1], 1)
@@ -409,7 +409,125 @@ def SqCenterPoint(square):
 def drawDiamonds(canvas):
     drawAllDiamonds(blank)
     cv.imshow('1 sqaure', blank)
+def createDefaultSquare3(square):
+    leftCornerInside = [0,0]
+    topCornerInside = [0,0]
+    rightCornerInside = [0,0]
+    bottomCornerInside = [0,0]
 
+    leftCornerOutside = [0,0]
+    topCornerOutside = [0,0]
+    rightCornerOutside = [0,0]
+    bottomCornerOutside = [0,0]
+
+    finalLeftSide = [0,0]
+    finalTopSide = [0,0]
+    finalRightSide = [0,0]
+    finalBottomSide = [0,0]
+
+    boarderRGB = (255, 190, 68)
+
+    savedMousePositon = pyautogui.position()
+    pyautogui.moveTo(543,1911)
+    
+    screenshot = pyautogui.screenshot()
+
+    #from saved mouse pos search for right side
+    currentRightSide = [0,0]
+    for i in range(999):
+        if screenshot.getpixel((savedMousePositon[0] + i, savedMousePositon[1])) != boarderRGB:
+            currentRightSide = [savedMousePositon[0] + i, savedMousePositon[1]]
+        else:
+            break
+
+    #once at far right side
+    pyautogui.moveTo(currentRightSide[0],currentRightSide[1] , 2)
+    high, low = getColourHighLow(currentRightSide[0], currentRightSide[1])
+
+    pyautogui.moveTo(currentRightSide[0], high)
+    if screenshot.getpixel((currentRightSide[0], high-1)) == boarderRGB:
+        print("high")
+    if screenshot.getpixel((currentRightSide[0], low+1)) == boarderRGB:
+       print("low")
+    
+    #if boarder is above, try 1 down 2 right
+        #if so, this is new right side and repeat until this is not true
+
+     #if boarder is below, try 1 up and 2 right    
+        #if so, this is new right side and repeat until this is not true
+
+    #if boarder is under or above this is then this is the right side
+
+    #pyautogui.moveTo(rightCornerInside[0], rightCornerInside[1], 5)
+    #once right side is complete
+    #from right side, travel backwards on the x to find left side
+    #once you hit the boarder this is left side
+
+    #divide the distance between rightside x and leftside x
+    #if number is uneven
+        #with this number add it to the x of left side
+        #this is center
+        
+        #from here travel the y up and down until you reach the boarder
+        #once reached these are the up and down pos of the sqaure
+        #check if there is any space next to the up and down positions
+        #if there are, check if the number is even or odd
+            #if number is even, have a top 1 and top 2 position
+            #if number is odd, the middle number is the positon
+    #if number is even create a 1 and 2 positon
+
+    #for the boarders
+    #go from these positions and find all the pixels of the boarder 
+    # (for example, on the rightside check x+, leftside check x-)
+    #if the number is even 
+        # divide by 2 and thats the boarder number
+        #add this with the correct side and this is the total number, create a sqaure with this
+    #if the number is uneven 
+
+def getColourHighLow(x,y):
+    screenshot = pyautogui.screenshot()
+    Colour = screenshot.getpixel((x, y))
+
+    high = 0
+    low = 0
+    
+    for i in range(999):
+        if screenshot.getpixel((x,y-i)) == Colour:
+                continue
+        else:
+             high = y-i+1
+             print(high)
+             break
+
+    for i in range(999):
+        if screenshot.getpixel((x,y+i)) == Colour:
+                continue
+        else:
+             low = y+i-1
+             print(low)
+             break
+
+    return(high, low)
+
+
+
+
+
+#def createColourSquareSize(x,y):
+#    topLeft = [0,0]
+#    topRight = [0,0]
+#    bottomLeft = [0,0] 
+#    bottomRight = [0,0]
+#    screenshot = pyautogui.screenshot()
+#
+#    Colour = screenshot.getpixel((x, y))
+#
+#    
+#
+#
+#    return (topLeft, topRight, bottomLeft, bottomRight)
+#def searchSquareForColour(topLeft, topRight, bottomLeft, bottomRight):
+#    pass 
 def createDefaultSquare2(square):
     #BGR 68, 190, 255
     #pixelBGR = (68, 190, 255)
@@ -431,168 +549,172 @@ def createDefaultSquare2(square):
     innerBottom = None
     #user places cursor he wants to be scanned
     #program saves position of mouse
-    savedMousePos = [pyautogui.position()[0],pyautogui.position()[1]]
-    #moves the mouse off of the sqaure (far away)
-    pyautogui.move(543,1911)
+    for i in range (999):
+        savedMousePos = [pyautogui.position()[0] + i,pyautogui.position()[1]]
+        #moves the mouse off of the sqaure (far away)
+        pyautogui.move(543,1911)
 
-    #screenshot
-    screenshot = pyautogui.screenshot()
+        #screenshot
+        screenshot = pyautogui.screenshot()
 
-    #scans the area (smallish distance) for yellow bars
-    #creates a sqaure within yellow bars as the clickable square
+        #scans the area (smallish distance) for yellow bars
+        #creates a sqaure within yellow bars as the clickable square
     
-    #bottom right row
-    i = 0
-    j = 0
-    firstRun = True
-    while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] + j)) != pixelRGB):
-        i = 0
-        if firstRun == False:
-            j += 1
-        while (screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] + j)) != pixelRGB):
-            innerArray.append((savedMousePos[0]+i,savedMousePos[1] + j))  
-            i += 1
-            firstRun = False
     
-    #bottom right column    
-    i = 0 #i
-    j = 0 #j
-    firstRun = True
-    while (screenshot.getpixel((savedMousePos[0] + j, savedMousePos[1])) != pixelRGB):
+        #bottom right row
         i = 0
-        if firstRun == False:
-            j += 1
-        while (screenshot.getpixel((savedMousePos[0] + j, savedMousePos[1] + i)) != pixelRGB):
-            if (savedMousePos[0]+j,savedMousePos[1] + i) not in innerArray:
-                columnArray.append((savedMousePos[0]+j,savedMousePos[1] + i))
-                if firstRun:
-                    columnArray.append((savedMousePos[0]+j,savedMousePos[1] + i))  
-            i += 1
-            firstRun = False
+        j = 0
+        firstRun = True
+        while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] + j)) != pixelRGB):
+            i = 0
+            if firstRun == False:
+                j += 1
+            while (screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] + j)) != pixelRGB):
+                innerArray.append((savedMousePos[0]+i,savedMousePos[1] + j))  
+                i += 1
+                firstRun = False
 
-    #bottom left           
-    i = 0
-    j = 0
-    firstRun = True
-    while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] + j)) != pixelRGB):
+        #bottom right column    
+        i = 0 #i
+        j = 0 #j
+        firstRun = True
+        while (screenshot.getpixel((savedMousePos[0] + j, savedMousePos[1])) != pixelRGB):
+            i = 0
+            if firstRun == False:
+                j += 1
+            while (screenshot.getpixel((savedMousePos[0] + j, savedMousePos[1] + i)) != pixelRGB):
+                if (savedMousePos[0]+j,savedMousePos[1] + i) not in innerArray:
+                    columnArray.append((savedMousePos[0]+j,savedMousePos[1] + i))
+                    if firstRun:
+                        columnArray.append((savedMousePos[0]+j,savedMousePos[1] + i))  
+                i += 1
+                firstRun = False
+
+        #bottom left           
         i = 0
-        if firstRun == False:
-            j += 1
-        while (screenshot.getpixel((savedMousePos[0] - i, savedMousePos[1] + j)) != pixelRGB):
-            innerArray.append((savedMousePos[0]-i,savedMousePos[1] + j))
-            firstRun = False
-            i += 1
+        j = 0
+        firstRun = True
+        while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] + j)) != pixelRGB):
+            i = 0
+            if firstRun == False:
+                j += 1
+            while (screenshot.getpixel((savedMousePos[0] - i, savedMousePos[1] + j)) != pixelRGB):
+                innerArray.append((savedMousePos[0]-i,savedMousePos[1] + j))
+                firstRun = False
+                i += 1
 
-    #bottom left column    
-    i = 0 #i
-    j = 0 #j
-    firstRun = True
-    while (screenshot.getpixel((savedMousePos[0] + j, savedMousePos[1])) != pixelRGB):
+        #bottom left column    
+        i = 0 #i
+        j = 0 #j
+        firstRun = True
+        while (screenshot.getpixel((savedMousePos[0] + j, savedMousePos[1])) != pixelRGB):
+            i = 0
+            if firstRun == False:
+                j += 1
+            while (screenshot.getpixel((savedMousePos[0] - j, savedMousePos[1] + i)) != pixelRGB):
+                if (savedMousePos[0]-j,savedMousePos[1] + i) not in innerArray:
+                    columnArray.append((savedMousePos[0]-j,savedMousePos[1] + i))
+                    if firstRun:
+                        columnArray.append((savedMousePos[0]-j,savedMousePos[1] + i))  
+                i += 1
+                firstRun = False
+        #top left     
         i = 0
-        if firstRun == False:
-            j += 1
-        while (screenshot.getpixel((savedMousePos[0] - j, savedMousePos[1] + i)) != pixelRGB):
-            if (savedMousePos[0]-j,savedMousePos[1] + i) not in innerArray:
-                columnArray.append((savedMousePos[0]-j,savedMousePos[1] + i))
-                if firstRun:
-                    columnArray.append((savedMousePos[0]-j,savedMousePos[1] + i))  
-            i += 1
-            firstRun = False
-    #top left     
-    i = 0
-    j = 0
-    firstRun = True
+        j = 0
+        firstRun = True
 
-    while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] - j)) != pixelRGB):
+        while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] - j)) != pixelRGB):
+            i = 0
+            if firstRun == False:
+                j += 1
+            while (screenshot.getpixel((savedMousePos[0] - i, savedMousePos[1] - j)) != pixelRGB):
+                innerArray.append((savedMousePos[0]-i,savedMousePos[1] - j))
+                firstRun = False
+                i += 1
+
+        #top left column    
+        i = 0 
+        j = 0 
+        firstRun = True
+        while (screenshot.getpixel((savedMousePos[0] - j, savedMousePos[1])) != pixelRGB):
+            i = 0
+            if firstRun == False:
+                j += 1
+            while (screenshot.getpixel((savedMousePos[0] - j, savedMousePos[1] - i)) != pixelRGB):
+                if (savedMousePos[0]-j,savedMousePos[1] - i) not in innerArray:
+                    columnArray.append((savedMousePos[0]-j,savedMousePos[1] - i))
+                    if firstRun:
+                        columnArray.append((savedMousePos[0]-j,savedMousePos[1] - i))  
+                i += 1
+                firstRun = False
+        #top right
         i = 0
-        if firstRun == False:
-            j += 1
-        while (screenshot.getpixel((savedMousePos[0] - i, savedMousePos[1] - j)) != pixelRGB):
-            innerArray.append((savedMousePos[0]-i,savedMousePos[1] - j))
-            firstRun = False
-            i += 1
+        j = 0
+        firstRun = True
+        #
+        while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] - j)) != pixelRGB):
+            i = 0
+            if firstRun == False:
+                j += 1
+            while (screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] - j)) != pixelRGB):
+                innerArray.append((savedMousePos[0]+i,savedMousePos[1] - j))
+                firstRun = False
+                i += 1
 
-    #top left column    
-    i = 0 
-    j = 0 
-    firstRun = True
-    while (screenshot.getpixel((savedMousePos[0] - j, savedMousePos[1])) != pixelRGB):
-        i = 0
-        if firstRun == False:
-            j += 1
-        while (screenshot.getpixel((savedMousePos[0] - j, savedMousePos[1] - i)) != pixelRGB):
-            if (savedMousePos[0]-j,savedMousePos[1] - i) not in innerArray:
-                columnArray.append((savedMousePos[0]-j,savedMousePos[1] - i))
-                if firstRun:
-                    columnArray.append((savedMousePos[0]-j,savedMousePos[1] - i))  
-            i += 1
-            firstRun = False
-    #top right
-    i = 0
-    j = 0
-    firstRun = True
-    #
-    while (screenshot.getpixel((savedMousePos[0], savedMousePos[1] - j)) != pixelRGB):
-        i = 0
-        if firstRun == False:
-            j += 1
-        while (screenshot.getpixel((savedMousePos[0] + i, savedMousePos[1] - j)) != pixelRGB):
-            innerArray.append((savedMousePos[0]+i,savedMousePos[1] - j))
-            firstRun = False
-            i += 1
+        #top right column    
+        i = 0 
+        j = 0 
+        firstRun = True
+        while (screenshot.getpixel((savedMousePos[0] - j, savedMousePos[1])) != pixelRGB):
+            i = 0
+            if firstRun == False:
+                j += 1
+            while (screenshot.getpixel((savedMousePos[0] + j, savedMousePos[1] - i)) != pixelRGB):
+                if (savedMousePos[0]+j,savedMousePos[1] - i) not in innerArray:
+                    columnArray.append((savedMousePos[0]+j,savedMousePos[1] - i))
+                    if firstRun:
+                        columnArray.append((savedMousePos[0]+j,savedMousePos[1] - i))  
+                i += 1
+                firstRun = False
 
-    #top right column    
-    i = 0 
-    j = 0 
-    firstRun = True
-    while (screenshot.getpixel((savedMousePos[0] - j, savedMousePos[1])) != pixelRGB):
-        i = 0
-        if firstRun == False:
-            j += 1
-        while (screenshot.getpixel((savedMousePos[0] + j, savedMousePos[1] - i)) != pixelRGB):
-            if (savedMousePos[0]+j,savedMousePos[1] - i) not in innerArray:
-                columnArray.append((savedMousePos[0]+j,savedMousePos[1] - i))
-                if firstRun:
-                    columnArray.append((savedMousePos[0]+j,savedMousePos[1] - i))  
-            i += 1
-            firstRun = False
+        combinedInnerList = []
+        #sort inner
+        yMin2Max = lambda y: y[1]
 
-    combinedInnerList = []
-    #sort inner
-    yMin2Max = lambda y: y[1]
+        for i in range(len(columnArray)):
+            combinedInnerList.append(columnArray[i])
+        for i in range(len(innerArray)):
+            combinedInnerList.append(innerArray[i])
 
-    for i in range(len(columnArray)):
-        combinedInnerList.append(columnArray[i])
-    for i in range(len(innerArray)):
-        combinedInnerList.append(innerArray[i])
-    
-    combinedInnerList.sort(key=yMin2Max)
+        combinedInnerList.sort(key=yMin2Max)
 
-    #create new image for debug
-    newImg = Image.new('RGB', (1920,1080))
-    #add inner array to image
-    for i in range (len(combinedInnerList)):
-        if i == 0:
+        #create new image for debug
+        newImg = Image.new('RGB', (1920,1080))
+        #add inner array to image
+        for i in range (len(combinedInnerList)):
+            if i == 0:
+                continue
+            newImg.putpixel((combinedInnerList[i]), (255,0,255))
+            newImg.save
+
+        #find the non clickable outer edge, using trend to find the half way point
+        #find end points
+        #use it to find the trend (trend is the difference for the last x of the first and second lines of pixels)
+        #also use the end points array to create the outer edge without checking over the inner square
+
+        for i in range(len(combinedInnerList)):
+            try:
+                if combinedInnerList[i][1] != combinedInnerList[i+1][1]:
+                    endPointsArray.append(combinedInnerList[i]) 
+
+            except:
+                pass
+
+        trend = endPointsArray[2][0]- endPointsArray[1][0]
+        if trend != 2:
             continue
-        newImg.putpixel((combinedInnerList[i]), (255,0,255))
-        newImg.save
-
-    #find the non clickable outer edge, using trend to find the half way point
-    #find end points
-    #use it to find the trend (trend is the difference for the last x of the first and second lines of pixels)
-    #also use the end points array to create the outer edge without checking over the inner square
-
-    for i in range(len(combinedInnerList)):
-        try:
-            if combinedInnerList[i][1] != combinedInnerList[i+1][1]:
-                endPointsArray.append(combinedInnerList[i]) 
-
-        except:
-            pass
-
-    trend = endPointsArray[1][0]- endPointsArray[0][0]
-    if trend != 2:
-        return
+        if trend == 2:
+            break
     print ('trend:', trend)
 
     #creating the outer edge
@@ -747,21 +869,21 @@ def createDefaultSquare2(square):
             newImg.putpixel((lastNaturalLine[i]), (47,70,34))
             newImg.save
 
-    leftSidePlusBoarder = 0
-    topSidePlusBoarder = 0
-    rightSidePlusBoarder = 0
-    bottomSidePlusBoarder = 0
-    distanceOfBoarder = endPointsArrayOuter[1][0] - endPointsArray[1][0]-1
-
-    leftSidePlusBoarder = (innerSqaureCornerLeft[0] - distanceOfBoarder, innerSqaureCornerLeft[1])
-    topSidePlusBoarder = (innerSqaureCornerUpper[0], innerSqaureCornerUpper[1] - distanceOfBoarder)
-    rightSidePlusBoarder = (innerSqaureCornerRight[0] + distanceOfBoarder,innerSqaureCornerRight[1])
-    bottomSidePlusBoarder = (innerSqaureCornerLower[0], innerSqaureCornerLower[1] + distanceOfBoarder)
-
-
-    square.setPoints(leftSidePlusBoarder, topSidePlusBoarder, rightSidePlusBoarder, bottomSidePlusBoarder)
+    #leftSidePlusBoarder = 0
+    #topSidePlusBoarder = 0
+    #rightSidePlusBoarder = 0
+    #bottomSidePlusBoarder = 0
+    #distanceOfBoarder = endPointsArrayOuter[1][0] - endPointsArray[1][0]-1
+#
+    #leftSidePlusBoarder = (innerSqaureCornerLeft[0] - distanceOfBoarder, innerSqaureCornerLeft[1])
+    #topSidePlusBoarder = (innerSqaureCornerUpper[0], innerSqaureCornerUpper[1] - distanceOfBoarder)
+    #rightSidePlusBoarder = (innerSqaureCornerRight[0] + distanceOfBoarder,innerSqaureCornerRight[1])
+    #bottomSidePlusBoarder = (innerSqaureCornerLower[0], innerSqaureCornerLower[1] + distanceOfBoarder)
+#
+#
+    #square.setPoints(leftSidePlusBoarder, topSidePlusBoarder, rightSidePlusBoarder, bottomSidePlusBoarder)
     
-    print ("distance of boarder", distanceOfBoarder)
+    #print ("distance of boarder", distanceOfBoarder)
     
 
     #square.setPoints()
@@ -789,10 +911,10 @@ def createDefaultSquare2(square):
 
     #debug display square
     
-    #open_cv_image = np.array(newImg) 
-    #open_cv_image = open_cv_image[:, :, ::-1].copy()
-    #cv.imshow("newImg", open_cv_image)
-    #cv.waitKey(0)
+    open_cv_image = np.array(newImg) 
+    open_cv_image = open_cv_image[:, :, ::-1].copy()
+    cv.imshow("newImg", open_cv_image)
+    cv.waitKey(0)
         
 
 
