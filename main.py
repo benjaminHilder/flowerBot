@@ -17,12 +17,18 @@ import os
 import time
 from threading import Timer
 import math
+import keyboard
+import mouseinfo
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 
 script_dir = os.path.dirname(__file__)
 
+
+
 squareList = []
 baseSquare = Square()
-newSqaure = Square()
+#newSqaure = Square()
 
 squareBoarderX = 0
 squareBoarderY = 0
@@ -31,6 +37,8 @@ innerSqaureCornerLeft  = 0
 innerSqaureCornerRight = 0
 innerSqaureCornerUpper = 0
 innerSqaureCornerLower = 0
+
+
 
 blank = np.zeros((1080,1920,3), dtype='uint8')
 
@@ -83,10 +91,14 @@ class SquarePos(Enum):
     bottom_right = 3
     bottom_left = 4
 
+
 def main():
+    #mouse event listener
+    
     countdownTimer()
     baseSquare.realSquare = True
     createDefaultSquare(baseSquare)
+
     squareList.append(baseSquare)
     #squareList.append(newSqaure)
     #try:
@@ -104,9 +116,13 @@ def main():
     #addSqaure(baseSquare, SquarePos.bottom_right, (255,0,255))
 
     #addSqaure(SquarePos.bottom_right, baseSquare,  baseSquare, True, (255,0,255))
+    createSquarePlan()
+    #mouseX, mouseY = pyautogui.position()
     
-    addMultipleSqauresWithFakes(SquarePos.bottom_left, baseSquare, 10, (255,0,255))
-    addMultipleSqaures(SquarePos.bottom_right, baseSquare, 10, (255,0,255))
+
+            
+    #addMultipleSqauresWithFakes(SquarePos.bottom_left, baseSquare, 10, (255,0,255))
+    #addMultipleSqaures(SquarePos.top_left, baseSquare, 10, (255,0,255))
     #addMultipleSqauresWithFakes(SquarePos.top_right, baseSquare, 5, (255,0,255))
     #addMultipleSqauresWithFakes(SquarePos.top_right, baseSquare, 5, (255,0,255))
 
@@ -166,9 +182,10 @@ def main():
 
     #print (squareList[0].leftPoint[0])
     cv.waitKey(0)
-    #for i, sqaure in enumerate(squareList):
-    #    if squareList[i].realSquare == True:
-    #            moveClickSquare(squareList[i], 1)
+    for i, sqaure in enumerate(squareList):
+        if squareList[i].realSquare == True:
+                moveClickSquare(squareList[i], 1)
+ 
     #for i, sqaure in enumerate(squareList):
          #moveClick(squareList[i].rightPoint[0],squareList[i].rightPoint[1], 1)
          #moveClick(squareList[i].topPoint[0],squareList[i].topPoint[1], 1)
@@ -407,6 +424,106 @@ def SqCenterPoint(square):
 
     return centerPoint
 
+def createSquarePlan():
+    canPlace = True
+    side = None
+    isNextTo = None
+    while True:
+        leftButtonState = win32api.GetKeyState(0x01)
+        rightButtonState = win32api.GetKeyState(0x02)
+        mouseX, mouseY = pyautogui.position()
+        #createSquarePlan(mouseX, mouseY)
+
+        if leftButtonState < 0 and canPlace == True:
+            canPlace = False
+            #print("is next to?")
+            isNextTo, side = isNextSquareNextToLast(mouseX,mouseY)
+            #print(isNextTo)
+            if isNextTo == True:
+                #print("adding square")
+                #side = SquarePos.top_left
+                #print("side: ", side)
+                addSqaure(side, baseSquare, True, (255,0,255))
+            
+        if leftButtonState > -1:
+            canPlace = True
+
+            
+        if keyboard.is_pressed('q'):  # if key 'q' is pressed 
+            print('You Pressed A Key!')
+            break  # finishing the loop
+
+    # when left click
+
+    
+    #if left click would be in a space that is next to the last place square
+
+    #add square
+
+    #if left click would be in a space that is not next to the last place sqaure
+    #add square with fakes
+        
+def isNextSquareNextToLast(x,y):
+    #top right
+    testSquare = Square()
+    testSquare.realSquare = True
+    squareList.append(testSquare)
+    squarePosition = None
+    
+    print(len(squareList))
+    if x > squareList[-2].topPoint[0] and y < squareList[-2].rightPoint[1]:
+        squarePosition = SquarePos.top_right
+        positionNextSquare(testSquare, squarePosition)
+
+        point = Point(x,y)
+        shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
+        if shapelySquare.contains(point):
+            print(shapelySquare.contains(point), squarePosition) 
+            squareList.pop()           
+            return shapelySquare.contains(point), squarePosition
+
+
+    #top left
+    if x < squareList[-2].topPoint[0] and y < squareList[-2].rightPoint[1]:
+        squarePosition = SquarePos.top_left
+        positionNextSquare(testSquare, squarePosition)
+
+        point = Point(x,y)
+        shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
+        if shapelySquare.contains(point):
+            print(shapelySquare.contains(point), squarePosition)
+            squareList.pop()
+            return shapelySquare.contains(point), squarePosition
+        
+    #bottom right
+    if x > squareList[-2].topPoint[0] and y > squareList[-2].rightPoint[1]:
+        squarePosition = SquarePos.bottom_right
+        positionNextSquare(testSquare, squarePosition)
+
+        point = Point(x,y)
+        shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
+        if shapelySquare.contains(point):      
+            print(shapelySquare.contains(point), squarePosition) 
+            squareList.pop() 
+            return shapelySquare.contains(point), squarePosition
+        
+    #bottom left
+    if x < squareList[-2].topPoint[0] and y > squareList[-2].rightPoint[1]:
+        squarePosition = SquarePos.bottom_left
+        positionNextSquare(testSquare, squarePosition)
+
+        point = Point(x,y)
+        shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
+        if shapelySquare.contains(point): 
+            print(shapelySquare.contains(point), squarePosition)
+            squareList.pop()
+            return shapelySquare.contains(point), squarePosition
+
+    else:
+        print(False, squarePosition)
+        squareList.pop()
+        return False, squarePosition
+        
 def drawDiamonds(canvas):
     drawAllDiamonds(blank)
     cv.imshow('1 sqaure', blank)
@@ -447,7 +564,7 @@ def createDefaultSquare(square):
             break
 
     #once at far right side
-    pyautogui.moveTo(currentRightSide[0],currentRightSide[1] , 2)
+    #pyautogui.moveTo(currentRightSide[0],currentRightSide[1] , 2)
 
   
         #check where the the colour is above and below
@@ -543,10 +660,10 @@ def createDefaultSquare(square):
     innerLeftSide = currentLeftSide
     #divide the distance between rightside x and leftside x by 2
     distXRL = innerRightSide[0] - innerLeftSide[0]
-    print("distXRL: ", distXRL)
+   # print("distXRL: ", distXRL)
     divXRL = distXRL/2
 
-    print("divXRL: ", math.floor(divXRL))
+    #print("divXRL: ", math.floor(divXRL))
     #pyautogui.moveTo(innerLeftSide[0] + divXRL, currentLeftSide[1], 0.001)
 
     #from here travel the y up and down until you reach the boarder
@@ -560,12 +677,12 @@ def createDefaultSquare(square):
         else:
             break
     #put in parking spot
-    for j in range(9999):
-        if screenshot.getpixel((currentTopSide[0]-1,currentTopSide[1])) !=boarderRGB:
-            currentTopSide[0]-=1
+    #for j in range(9999):
+        #if screenshot.getpixel((currentTopSide[0]-1,currentTopSide[1])) !=boarderRGB:
+            #currentTopSide[0]-=1
 
-        else:
-            break
+        #else:
+            #break
     innerTopSide = currentTopSide
     #pyautogui.moveTo(innerTopSide[0],innerTopSide[1], 0.001)
 
@@ -581,7 +698,7 @@ def createDefaultSquare(square):
     for j in range(9999):
         if screenshot.getpixel((currentBottomSide[0]-1,currentBottomSide[1])) !=boarderRGB:
             currentBottomSide[0]-=1
-
+            #pyautogui.moveTo(currentBottomSide[0], currentBottomSide[1], 0.001)
         else:
             break   
     innerBottomSide = currentBottomSide
@@ -610,7 +727,8 @@ def createDefaultSquare(square):
     for i in range(9999):
         if screenshot.getpixel((currentOuterTop[0],currentOuterTop[1]-1)) == boarderRGB:
             currentOuterTop[1] -= 1
-            #pyautogui.moveTo(currentOuterTop[0], currentOuterTop[1], 0.001)
+            #pyautogui.moveTo(currentOuterTop[0], currentOuterTop[1], 2)
+            
         else:
             break
     
@@ -630,30 +748,36 @@ def createDefaultSquare(square):
         else:
             break
 
-    distLeft = innerLeftSide[0] - currentOuterLeft[0]
-    distTop = innerTopSide[1] - currentOuterTop[1]
-    distRight = currentOuterRight[0] - innerRightSide[0]
-    distBottom = currentOuterBottom[1] - innerBottomSide[1]
+    distLeft = innerLeftSide[0] - currentOuterLeft[0] + 0.000001
+    distTop = innerTopSide[1] - currentOuterTop[1] 
+    distRight = currentOuterRight[0] - innerRightSide[0] -0.000001
+    distBottom = currentOuterBottom[1] - innerBottomSide[1] -0.000001
 
 
     # divide by 2 and thats the boarder number
-    distLeft = round(distLeft/2)
-    distTop = round(distTop/2)
-    distRight = round(distRight/2)
-    distBottom = round(distBottom/2)
+    distLeft = distLeft/2
+    #distTop = distTop/2
+    distRight = distRight/2
+    distBottom = distBottom/2
 
+    
     #add this with the correct side and this is the total number, create a sqaure with this
     finalLeftSide = [innerLeftSide[0] - distLeft, innerLeftSide[1]]
     finalTopSide = [innerTopSide[0], innerTopSide[1] - distTop]
     finalRightSide = [innerRightSide[0] + distRight, innerRightSide[1]]
     finalBottomSide = [innerBottomSide[0], innerBottomSide[1] + distBottom]
 
+    #pyautogui.moveTo(finalTopSide)
+    #finalLeftSide[0] = round(finalLeftSide[0])
+    #finalTopSide[0] = round(finalTopSide[0])
+    #finalBottomSide[0] = round(finalBottomSide[0])
+
     #pyautogui.moveTo(finalLeftSide[0], finalLeftSide[1], 5)
     #pyautogui.moveTo(finalTopSide[0], finalTopSide[1], 5)
     #pyautogui.moveTo(finalRightSide[0], finalRightSide[1], 5)
     #pyautogui.moveTo(finalBottomSide[0], finalBottomSide[1], 5)
 
-    print("finaltopside: ", finalTopSide)
+    pyautogui.moveTo(finalTopSide)
     square.setPoints(finalLeftSide, finalTopSide, finalRightSide, finalBottomSide)
 
 
@@ -685,16 +809,21 @@ def addSqaure(posDir, baseSquare, realSquare = True, squareColour = baseSquare.c
         square.realSquare = False
         square.colour = squareColour
         square.thickness = thickness
+    #print("append square")
     squareList.append(square)
 
     positionNextSquare(square, posDir, baseSquare)
 
-
-
-def positionNextSquare(square, posDir, baseSquare):
+def positionNextSquare(square, posDir, baseSquare = None):
     
     previousPos = squareList[-2]
-    if (posDir == SquarePos.bottom_left):
+    
+    #print("prev left", previousPos.leftPoint)
+    #print("prev top", previousPos.topPoint)
+    #print("prev right", previousPos.rightPoint)
+    #print("prev bottom", previousPos.bottomPoint)
+    #top left
+    if (posDir == SquarePos.top_left):
         LTXdifference = previousPos.leftPoint[0] - previousPos.topPoint[0]
         TLYdifference = previousPos.topPoint[1] - previousPos.leftPoint[1]
 
@@ -705,6 +834,7 @@ def positionNextSquare(square, posDir, baseSquare):
         #topPoint
         #LTXdifference = previousSquare.leftPoint[0] - previousSquare.topPoint[0]
         #TLYdifference = previousSquare.topPoint[1] - previousSquare.leftPoint[1]
+
 
         #x
         square.topPoint[0] = previousPos.topPoint[0] + LTXdifference
@@ -717,7 +847,8 @@ def positionNextSquare(square, posDir, baseSquare):
         #y
         square.leftPoint[1] = previousPos.leftPoint[1] + TLYdifference
 
-    if (posDir == SquarePos.bottom_right):
+    #top right
+    if (posDir == SquarePos.top_right):
         RTXdifference = previousPos.rightPoint[0] - previousPos.topPoint[0]
         TRYdifference = previousPos.topPoint[1] - previousPos.rightPoint[1]
 
@@ -740,7 +871,8 @@ def positionNextSquare(square, posDir, baseSquare):
         square.topPoint[1] = previousPos.topPoint[1] + TRYdifference
 
 
-    if (posDir == SquarePos.top_right):
+    #bottom right
+    if (posDir == SquarePos.bottom_right):
        square.topPoint = previousPos.rightPoint
        square.leftPoint = previousPos.bottomPoint
        
@@ -759,7 +891,8 @@ def positionNextSquare(square, posDir, baseSquare):
        #y
        square.bottomPoint[1] = previousPos.bottomPoint[1] - TLYdifference
 
-    if (posDir == SquarePos.top_left):
+    #bottom left
+    if (posDir == SquarePos.bottom_left):
        square.topPoint = previousPos.leftPoint
        square.rightPoint = previousPos.bottomPoint
        
@@ -778,7 +911,22 @@ def positionNextSquare(square, posDir, baseSquare):
        #y
        square.bottomPoint[1] = previousPos.bottomPoint[1] - LBYdifference 
 
+    
+
 def drawDiamond(img, leftPoint, topPoint, rightPoint, bottomPoint, colour, thickness):
+
+    leftPoint[0] = math.floor(leftPoint[0])
+    leftPoint[1] = math.floor(leftPoint[1])
+
+    topPoint[0] = math.floor(topPoint[0])
+    topPoint[1] = math.floor(topPoint[1])
+
+    rightPoint[0] = math.floor(rightPoint[0])
+    rightPoint[1] = math.floor(rightPoint[1])
+
+    bottomPoint[0] = math.floor(bottomPoint[0])
+    bottomPoint[1] = math.floor(bottomPoint[1])
+
     cv.line(img, leftPoint, topPoint, colour, thickness)
     cv.line(img, topPoint, rightPoint, colour, thickness)
     cv.line(img, rightPoint, bottomPoint, colour, thickness)

@@ -9,24 +9,17 @@ class Square:
         self.harvestTime = 0
         self.harvestClock = 0
 
-        self.leftPointHigh = [0,0]
-        self.leftPointLow = [0,0]
-        
-        self.topPointHigh = [0,0]
-        self.topPointLow = [0,0]
-        
-        self.rightPointHigh = [0,0]
-        self.rightPointLow = [0,0]
-
-        self.bottomPointHigh = [0,0]
-        self.bottomPointLow = [0,0]
+        self.leftPoint = [0,0]
+        self.topPoint = [0,0]
+        self.rightPoint = [0,0]
+        self.bottomPoint = [0,0]
 
         self.colour = (0,255,255)
         self.thickness = thickness=3
 
     def setPoints(self, point1, point2, point3, point4):
+
         self.leftPoint = point1
-        print ("point1: ", point1)
         self.topPoint = point2
         self.rightPoint = point3
         self.bottomPoint = point4
