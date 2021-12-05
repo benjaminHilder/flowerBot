@@ -14,6 +14,11 @@ class Square:
         self.rightPoint = [0,0]
         self.bottomPoint = [0,0]
 
+        self.innerLeft = [0,0]
+        self.innerTop = [0,0]
+        self.innerRight = [0,0]
+        self.innerBottom = [0,0]
+
         self.colour = (0,255,255)
         self.thickness = thickness=3
 
