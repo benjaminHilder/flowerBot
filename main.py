@@ -118,7 +118,7 @@ def main():
     #addSqaure(baseSquare, SquarePos.bottom_right, (255,0,255))
 
     #addSqaure(SquarePos.bottom_right, baseSquare,  baseSquare, True, (255,0,255))
-    #createSquarePlan()
+    createSquarePlan()
     #mouseX, mouseY = pyautogui.position()
     
 
@@ -183,8 +183,8 @@ def main():
     
 
     #print (squareList[0].leftPoint[0])
-    for i in range (10):
-        addSqaure(SquarePos.bottom_right, baseSquare)
+    #for i in range (10):
+        #addSqaure(SquarePos.top_left, baseSquare, True)
     #cv.waitKey(0)
     print("len: ", len(squareList))
     #for i, sqaure in enumerate(squareList):
@@ -437,10 +437,11 @@ def createSquarePlan():
     while True:
         leftButtonState = win32api.GetKeyState(0x01)
         rightButtonState = win32api.GetKeyState(0x02)
+        keyS_State = win32api.GetKeyState(0x53)
         mouseX, mouseY = pyautogui.position()
         #createSquarePlan(mouseX, mouseY)
 
-        if leftButtonState < 0 and canPlace == True:
+        if keyS_State < 0 and canPlace == True:
 
             canPlace = False
             try:
@@ -454,12 +455,12 @@ def createSquarePlan():
                 i += 1
 
                 print("next to ", i)
-               # cv.destroyAllWindows()
+
                 #print("adding square")
-                #side = SquarePos.top_left
+                #side = SqusarePos.top_left
                 #print("side: ", side)
                 addSqaure(side, baseSquare, True, (255,0,255))
-                #pyautogui.moveTo(squareList[-1].bottomPoint[0], squareList[-1].bottomPoint[1], 2)
+                #spyautogui.moveTo(squareList[-1].bottomPoint[0], squareList[-1].bottomPoint[1], 2)
                 #drawDiamonds(blank)
                 #cv.waitKey(1)
             
@@ -469,11 +470,19 @@ def createSquarePlan():
                 #pyautogui.moveTo(squareList[-1].bottomPoint[0], squareList[-1].bottomPoint[1], 2)
                 #pyautogui.moveTo(currentOuterBottom[0],currentOuterBottom[1])
                 #print("side: ", side)
-        if leftButtonState > -1:
+        if keyS_State > -1 and canPlace == False:
+            cv.destroyAllWindows()
+            drawDiamonds(blank)
+            cv.waitKey(1)
+            
+        if keyS_State > -1:
             canPlace = True
 
         if keyboard.is_pressed('q'):  # if key 'q' is pressed 
-            print('You Pressed A Key!')
+            print('finished setting up!')
+            for i in range (len(squareList)):
+                print ("i = ", i+1," this numbers centerPoint is ", squareList[i+1].centerPoint)
+                pyautogui.moveTo(squareList[i+1].centerPoint[0], squareList[i+1].centerPoint[1], 1)
             break  # finishing the loop
 
     # when left click
@@ -863,7 +872,7 @@ def addMultipleSqauresWithFakes(posDir, baseSquare, multiple, colour):
     #    if squareList[i-1].realSquare == False:
     #        squareList.pop(i-1)
 
-def addSqaure(posDir, baseSquare, realSquare = True, squareColour = baseSquare.colour,
+def addSqaure(posDir, baseSquare, settingWithMouse = False, realSquare = True, squareColour = baseSquare.colour,
               thickness = baseSquare.thickness):
     square = Square()
     if realSquare == True:
@@ -877,10 +886,14 @@ def addSqaure(posDir, baseSquare, realSquare = True, squareColour = baseSquare.c
     #print("append square")
     squareList.append(square)
 
-    positionNextSquare2(square, posDir)
+    positionNextSquare2(square, posDir, settingWithMouse)
 
-def positionNextSquare2(square, posDir):
+def positionNextSquare2(square, posDir, settingWithMouse = True):
     #get width and high of outer
+    if settingWithMouse:
+        howFast = 0
+    else:
+        howFast = 0.6
 
     leftDiff = squareList[0].innerLeft[0] - squareList[0].leftPoint[0]
     topDiff = squareList[0].innerTop[1] - squareList[0].topPoint[1]
@@ -900,8 +913,10 @@ def positionNextSquare2(square, posDir):
         square.rightPoint = [previousSquare.bottomPoint[0], previousSquare.bottomPoint[1]- previousHeight]
         square.bottomPoint = [previousSquare.rightPoint[0] - previousWidth, previousSquare.rightPoint[1]]
         
-        pyautogui.moveTo(previousSquare.leftPoint[0], previousSquare.topPoint[1], 2)
-        positionToPurpleTop(square, previousHeight, previousWidth, topDiff)
+        #pyautogui.moveTo(previousSquare.leftPoint[0], previousSquare.topPoint[1])
+        x = previousSquare.leftPoint[0]+1
+        y = previousSquare.topPoint[1]
+        positionToPurpleTop(square,x,y, previousHeight, previousWidth, topDiff, howFast)
         #print("move")
 
     if posDir == SquarePos.top_right:
@@ -911,17 +926,21 @@ def positionNextSquare2(square, posDir):
         square.bottomPoint = [previousSquare.leftPoint[0] + previousWidth, previousSquare.leftPoint[1]]
         
         
-        pyautogui.moveTo(previousSquare.rightPoint[0]+1, previousSquare.topPoint[1], 1)
+        #pyautogui.moveTo(previousSquare.rightPoint[0]+1, previousSquare.topPoint[1], 1)
+        x = previousSquare.rightPoint[0]+1
+        y = previousSquare.topPoint[1]
         #print("move")
-        positionToPurpleTop(square, previousHeight, previousWidth, topDiff)
+        positionToPurpleTop(square,x,y, previousHeight, previousWidth, topDiff, howFast)
     if posDir == SquarePos.bottom_left:
         square.leftPoint = [previousSquare.bottomPoint[0] - previousWidth, previousSquare.bottomPoint[1]]
         square.topPoint = [previousSquare.rightPoint[0] - previousWidth, previousSquare.rightPoint[1]]
         square.rightPoint = [previousSquare.topPoint[0], previousSquare.topPoint[1] + previousHeight]
         square.bottomPoint = [previousSquare.leftPoint[0], previousSquare.leftPoint[1] + previousHeight]
 
-        pyautogui.moveTo(previousSquare.leftPoint[0]+1, previousSquare.bottomPoint[1], 1)
-        positionToPurpleTop(square, previousHeight, previousWidth, topDiff)
+        #pyautogui.moveTo(previousSquare.leftPoint[0]+1, previousSquare.bottomPoint[1], 1)
+        x = previousSquare.leftPoint[0]+1
+        y = previousSquare.bottomPoint[1]
+        positionToPurpleTop(square,x,y, previousHeight, previousWidth, topDiff, howFast)
 
     if posDir == SquarePos.bottom_right:
         square.leftPoint = [previousSquare.topPoint[0], previousSquare.topPoint[1] - previousHeight]
@@ -929,19 +948,15 @@ def positionNextSquare2(square, posDir):
         square.rightPoint = [previousSquare.bottomPoint[0] + previousWidth, previousSquare.bottomPoint[1]]
         square.bottompoint = [previousSquare.rightPoint[0], previousSquare.rightPoint[1] + previousHeight]
 
-        pyautogui.moveTo(previousSquare.rightPoint[0], previousSquare.bottomPoint[1], 1)
-        positionToPurpleTop(square, previousHeight, previousWidth, topDiff)
-    if posDir == SquarePos.bottom_left:
-        pass
-    if posDir == SquarePos.bottom_right:
-        pass
-    #move mouse to that area
-    #find purple top corner
-    #move the inner top of new corner to the purple one 
+        #pyautogui.moveTo(previousSquare.rightPoint[0], previousSquare.bottomPoint[1], 1)
+        x = previousSquare.rightPoint[0]+1
+        y = previousSquare.bottomPoint[1]
+        positionToPurpleTop(square,x,y, previousHeight, previousWidth, topDiff, howFast)
 
     pass
-def positionToPurpleTop(square, height, width, topDiff):
+def positionToPurpleTop(square, mouseX, mouseY, height, width, topDiff, howFast = 0.6):
     #print("in posiiton to purple")
+    pyautogui.moveTo(mouseX, mouseY, howFast)
     screenshot = pyautogui.screenshot()
     purpleRGB = (166, 107, 208)
 
@@ -952,7 +967,7 @@ def positionToPurpleTop(square, height, width, topDiff):
 
     topLeftDist = square.topPoint[0] - square.leftPoint[0]
 
-    mouseX, mouseY = pyautogui.position()
+    #mouseX, mouseY = pyautogui.position()
 
     for i in range(9999):
         if screenshot.getpixel((mouseX, mouseY-1)) != purpleRGB:
@@ -1076,6 +1091,10 @@ def positionToPurpleTop(square, height, width, topDiff):
     square.leftPoint = [mouseX - halfWidth, topBoarder+halfHeight]
     square.rightPoint = [mouseX + halfWidth, topBoarder+halfHeight]
     square.bottomPoint = [mouseX, topBoarder+height]
+    print("setting centerpoint to ", [mouseX, topBoarder + halfHeight])
+    square.centerPoint = [mouseX, topBoarder + halfHeight]
+
+    print("centerPoint is now ", square.centerPoint)
 
 def positionNextSquare(square, posDir, baseSquare = None):
     
