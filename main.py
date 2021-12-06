@@ -184,7 +184,7 @@ def main():
 
     #print (squareList[0].leftPoint[0])
     for i in range (10):
-        addSqaure(SquarePos.top_left, baseSquare)
+        addSqaure(SquarePos.bottom_right, baseSquare)
     #cv.waitKey(0)
     print("len: ", len(squareList))
     #for i, sqaure in enumerate(squareList):
@@ -914,7 +914,23 @@ def positionNextSquare2(square, posDir):
         pyautogui.moveTo(previousSquare.rightPoint[0]+1, previousSquare.topPoint[1], 1)
         #print("move")
         positionToPurpleTop(square, previousHeight, previousWidth, topDiff)
+    if posDir == SquarePos.bottom_left:
+        square.leftPoint = [previousSquare.bottomPoint[0] - previousWidth, previousSquare.bottomPoint[1]]
+        square.topPoint = [previousSquare.rightPoint[0] - previousWidth, previousSquare.rightPoint[1]]
+        square.rightPoint = [previousSquare.topPoint[0], previousSquare.topPoint[1] + previousHeight]
+        square.bottomPoint = [previousSquare.leftPoint[0], previousSquare.leftPoint[1] + previousHeight]
 
+        pyautogui.moveTo(previousSquare.leftPoint[0]+1, previousSquare.bottomPoint[1], 1)
+        positionToPurpleTop(square, previousHeight, previousWidth, topDiff)
+
+    if posDir == SquarePos.bottom_right:
+        square.leftPoint = [previousSquare.topPoint[0], previousSquare.topPoint[1] - previousHeight]
+        square.topPoint = [previousSquare.leftPoint[0] + previousWidth, previousSquare.leftPoint[1]]
+        square.rightPoint = [previousSquare.bottomPoint[0] + previousWidth, previousSquare.bottomPoint[1]]
+        square.bottompoint = [previousSquare.rightPoint[0], previousSquare.rightPoint[1] + previousHeight]
+
+        pyautogui.moveTo(previousSquare.rightPoint[0], previousSquare.bottomPoint[1], 1)
+        positionToPurpleTop(square, previousHeight, previousWidth, topDiff)
     if posDir == SquarePos.bottom_left:
         pass
     if posDir == SquarePos.bottom_right:
