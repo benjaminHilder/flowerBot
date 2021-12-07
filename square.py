@@ -7,7 +7,7 @@ class Square:
         self.ID = 0
         self.landType = ""
         self.harvestTime = 60
-        self.harvestClock = 60
+        self.harvestClock = 0
 
         self.centerPoint = [0,0]
 

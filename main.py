@@ -114,12 +114,12 @@ def main():
     createSquarePlan()
     
     #harvest everything for consistancy at the start
-    for i in range(len(squareList)):
-        if i == 0: continue
-        harvestQueue.append(squareList[i])
+    #for i in range(len(squareList)):
+    #    if i == 0: continue
+    #    harvestQueue.append(squareList[i])
         
     
-    checkForHarvests(5)
+    checkForHarvests(30)
     
     # if esc key is pressed
     if win32api.GetKeyState(0x1B) < 0:
@@ -388,15 +388,20 @@ def checkForHarvests(timeBeforeCheck = 60):
         print(timeBeforeCheck)
 
     print("harvest queue length is ", len(harvestQueue))
-    print("planting queue length is ", len(plantingQueue) )
+    print("planting queue length is ", len(plantingQueue))
+    currentHarvestQueue = harvestQueue
+    currentPlantingQueue = plantingQueue
+    
+    harvestQueue.clear
+    plantingQueue.clear
     try:
-        for i in range (len(harvestQueue)):
-            harvestFlower(harvestQueue[i])
+        for i in currentHarvestQueue:
+            harvestFlower(i)
     except:
         pass
     try:
-        for i in range (len(plantingQueue)):
-            plantFlower(plantingQueue[i])
+        for i in currentPlantingQueue:
+            plantFlower(i)
     except:
         pass
     
@@ -457,6 +462,7 @@ def plantFlower(square, tile = flowerArea.tile1):
     moveClick(square.centerPoint[0], square.centerPoint[1], 1)
     plantingQueue.remove(square)
     #check if area menu screen to select plant is present
+    time.sleep(1)
     if checkForPixels((761,305), 50, 1, (255,255,255)):
         while(True):
             screenshot = pyautogui.screenshot()
@@ -490,16 +496,15 @@ def plantFlower(square, tile = flowerArea.tile1):
                         moveClick(345,271)
                         break
                     time.sleep(1)
-                #click water icon
-
-                hudClick(hudArea.water)
-                #click sqaure
-                moveClick(square.centerPoint[0], square.centerPoint[1])
-                minusWaterCount(1)
-                if getWaterCount() <= 0:
-                    refillWater()
-                    resetWaterCount()
-                break
+            #click water icon
+            hudClick(hudArea.water)
+            #click sqaure
+            moveClick(square.centerPoint[0], square.centerPoint[1])
+            minusWaterCount(1)
+            if getWaterCount() <= 0:
+                refillWater()
+                resetWaterCount()
+            break
 
 
     #removeLastPlantedFromQueue()
