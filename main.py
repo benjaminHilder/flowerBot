@@ -15,12 +15,13 @@ from PIL import Image
 from math import sqrt
 import os
 import time
-from threading import Timer
+from threading import TIMEOUT_MAX, Timer
 import math
 import keyboard
 import mouseinfo
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+import sys
 
 script_dir = os.path.dirname(__file__)
 
@@ -38,7 +39,9 @@ innerSqaureCornerRight = 0
 innerSqaureCornerUpper = 0
 innerSqaureCornerLower = 0
 
+waterCount = 0
 
+waterPos = [0,0]
 
 blank = np.zeros((1080,1920,3), dtype='uint8')
 
@@ -94,46 +97,50 @@ class SquarePos(Enum):
 
 def main():
     #mouse event listener
-    
+    setupWaterPosition()
+    print("countdown started")
     countdownTimer()
+
     baseSquare.realSquare = True
     createDefaultSquare(baseSquare)
 
     squareList.append(baseSquare)
 
     pyautogui.moveTo(squareList[0].topPoint[0], squareList[0].leftPoint[1], 2)
-    #squareList.append(newSqaure), 
-    #try:
-        #while True:
-            #checkForHarvests(60)
-    #except KeyboardInterrupt:
-        #pass
-
-
-
-    #addSqaure(baseSquare, SquarePos.top_left, (255,0,255))
-
-    #addSqaure(baseSquare, SquarePos.top_right, (255,0,255))
-
-    #addSqaure(baseSquare, SquarePos.bottom_right, (255,0,255))
-
-    #addSqaure(SquarePos.bottom_right, baseSquare,  baseSquare, True, (255,0,255))
+    #squareList.append(newSqaure),
     createSquarePlan()
-    #mouseX, mouseY = pyautogui.position()
     
+    #harvest everything for consistancy at the start
+    for i in range (len(squareList)):
+        try:
+            harvestFlower(squareList[i+1])
+        except:
+            pass
 
-            
-    #addMultipleSqauresWithFakes(SquarePos.bottom_left, baseSquare, 10, (255,0,255))
-    #addMultipleSqaures(SquarePos.top_left, baseSquare, 10, (255,0,255))
-    #addMultipleSqauresWithFakes(SquarePos.top_right, baseSquare, 5, (255,0,255))
-    #addMultipleSqauresWithFakes(SquarePos.top_right, baseSquare, 5, (255,0,255))
+    for i in range (len(squareList)):
+        try:
+            plantFlower(squareList[i+1], flowerArea.tile1)
+        except:
+            pass
 
     
-    #drawDebug
-    #drawDiamonds(blank)
-    #drawDiamond(blank, baseSquare.leftPoint, baseSquare.topPoint, baseSquare.rightPoint, baseSquare.bottomPoint,  (166, 107, 208), thickness=1)
-    #drawDiamond(blank, newSqaure.leftPoint, newSqaure.topPoint, newSqaure.rightPoint, newSqaure.bottomPoint, (68,190,255),  thickness=1)
-    #cv.imshow('1 sqaure', blank)
+    checkForHarvests(10)
+    # if esc key is pressed
+    if win32api.GetKeyState(0x1B) < 0:
+        print("stopping operations")
+        sys.exit()
+
+        
+    
+    
+   #try:
+   #    while True:
+   #        checkForHarvests(60)
+   #except KeyboardInterrupt:
+   #    pass
+
+
+    
     #hudClick(hudArea.bag)
     #hudClick(hudArea.select,0.01)
     #hudClick(hudArea.shovel, 1)
@@ -186,7 +193,7 @@ def main():
     #for i in range (10):
         #addSqaure(SquarePos.top_left, baseSquare, True)
     #cv.waitKey(0)
-    print("len: ", len(squareList))
+    #print("len: ", len(squareList))
     #for i, sqaure in enumerate(squareList):
     #    if squareList[i].realSquare == True:
     #            moveClickSquare(squareList[i], 1)
@@ -309,7 +316,7 @@ def flowerMenuClick(flowerCommand, time=0.2):
     if flowerCommand == flowerArea.scending:
         moveClick(1230, 360, time)
 
-def plantingMenuClick(plantingCommand, time):
+def plantingMenuClick(plantingCommand, time = 0.2):
     if plantingCommand == flowerArea.tile1:
         moveClick(690, 470, time)
     if plantingCommand == flowerArea.tile2:
@@ -330,71 +337,159 @@ def plantingMenuClick(plantingCommand, time):
 
     if plantingCommand == flowerArea.tile9:
         moveClick(690, 640, time)
-    if plantingCommand == flowerArea.tile9:
+    if plantingCommand == flowerArea.tile10:
         moveClick(880, 640, time)
-    if plantingCommand == flowerArea.tile9:
+    if plantingCommand == flowerArea.tile11:
         moveClick(1049, 640, time)
-    if plantingCommand == flowerArea.tile9:
+    if plantingCommand == flowerArea.tile12:
         moveClick(1195, 640, time)
 
-def checkForHarvests(timeBeforeCheck = 60):
-    #every minute check go through square list to see if any squares harvestClocks are at 1
-    #have a clock that counts down every 60 seconds
-    def timeout():
-        searchSquaresForTime()
+    if plantingCommand == bagArea.exit:
+        moveClick(1316,333, time)
     
-    t = Timer(timeBeforeCheck, timeout)
-    t.start()
-    #if so harvest land function
-    #replantFlower (which resets the stats from plantFlower function)
-    #if curr
+def setupWaterPosition():
+    print("Set position of water refill")
+    while (True):
+        #if the s key pressed
+
+        if win32api.GetKeyState(0x53) < 0:
+            waterPos[0] = pyautogui.position()[0]
+            waterPos[1] = pyautogui.position()[1]
+
+            break
+
+    refillWater()
+def minusWaterCount(num):
+    waterCount -num
+def resetWaterCount():
+    waterCount = 10
+def getWaterCount():
+    return waterCount
+def refillWater(time = 0.5):
+    moveClick(waterPos[0], waterPos[1], time)
+    resetWaterCount()
+
+def checkForHarvests(timeBeforeCheck = 60):
+
+    def callCheckHarvest():
+        print("calling check harvest")
+        searchSquaresForTime()
+        Timer(timeBeforeCheck,callCheckHarvest).start()
+
+    callCheckHarvest()
+
+
+
+    #s = sched.scheduler(time.time, time.sleep)
+    #def call 
+    ##every minute check go through square list to see if any squares harvestClocks are at 1
+    ##have a clock that counts down every 60 seconds
+    #def timeout():
+    #    searchSquaresForTime()
+    #
+    #t = Timer(timeBeforeCheck, timeout)
+    #t.start()
+    ##if so harvest land function
+    ##replantFlower (which resets the stats from plantFlower function)
+    ##if curr
 
 def harvestFlower(square):
+
     #click scissors
     hudClick(hudArea.scissor)
     #click square that needs to be harvest
-    moveClick(SqCenterPoint(square))
+    #moveClick(SqCenterPoint(square))
+    moveClick(square.centerPoint[0], square.centerPoint[1])
     #wait to see if pop up comes up
     #if it does click harvest
-    if checkForPixels((814,452),20,20, (255,255,255)) == True:
-        #green harvest button is at x900, y574
+    screenshot = pyautogui.screenshot()
+    #green harvest button is at x900, y574
+    if screenshot.getpixel((874,572)) == (120,210,130):
+        print("called click harvest")
         moveClick(900, 574)
+    #if clear land comes up
+    elif screenshot.getpixel((888, 574)) == (120,210,130):
+        print("called cancel clear land")
+        moveClick(1000, 572)
+    
     square.needsHarvest = False
     #done         
 
-def plantFlower(square, tile):
+def plantFlower(square, tile = flowerArea.tile1):
     #click hud shovel
     hudClick(hudArea.shovel)
     #till land
-    moveClick(SqCenterPoint(square))
+    moveClick(square.centerPoint[0], square.centerPoint[1])
     #click hud plant
+
     hudClick(hudArea.plant)
     #click land
-    moveClick(SqCenterPoint(square))
-    #click tile
-    plantingMenuClick(tile)
-    #check id
-    #apply stats to land
-    #if cannot find ID or get stats default to 1 hour for harvest clock
-    square.harvestTime = 60
-    square.harvestClock = square.harvestTime
-    #click water icon
-    hudClick(hudArea.water)
-    #click sqaure
-    moveClick(SqCenterPoint(square))
+    moveClick(square.centerPoint[0], square.centerPoint[1], 1)
+    #check if area menu screen to select plant is present
+    if checkForPixels((761,305), 50, 1, (255,255,255)):
+        while(True):
+            screenshot = pyautogui.screenshot()
+            print("in loop")
+            #if no flowers (vist flower market button pops up)
+            if screenshot.getpixel((878, 700)) == (120, 210, 130):
+                print("time to exit")
+                noFlower = True
+                plantingMenuClick(bagArea.exit, 0.2)
+                break
+
+            elif screenshot.getpixel((680, 492)) != (255,255,255):
+                #click tile
+                plantingMenuClick(tile)
+                #check id
+                #apply stats to land
+                #if cannot find ID or get stats default to 1 hour for harvest clock
+                square.harvestTime = 60
+                square.harvestClock = square.harvestTime
+                #check for harvest cutscene
+                seconds = 2
+                for i in range(seconds):
+                    screenshot = pyautogui.screenshot()
+                    if screenshot.getpixel((345, 271)) == (90,207,148) and screenshot.getpixel((1722, 271)) == (166,212,105):
+                        moveClick(345,271)
+                        break
+                    time.sleep(1)
+                #click water icon
+
+                hudClick(hudArea.water)
+                #click sqaure
+                moveClick(square.centerPoint[0], square.centerPoint[1])
+                minusWaterCount(1)
+                if getWaterCount() <= 0:
+                    refillWater()
+                    resetWaterCount()
+                break
+
 
 def searchSquaresForTime():
+    #print("searching harvest")
     for i in range(len(squareList)):
-        if squareList[i].harvestClock == 1:
-            harvestFlower(squareList[i])
-            squareList[i].harvestClock = squareList[i].harvestTime
-            plantFlower(squareList[i])
-        else:
-            squareList[i].harvestClock - 1
+        if i == 0: continue
+        try:
+            if squareList[i].harvestClock == 1:
+                print("harvesting ", i)
+                harvestFlower(squareList[i])
+                
+                squareList[i].harvestClock = squareList[i].harvestTime
+
+                print("planting ", i)
+                plantFlower(squareList[i])
+
+            else:
+                squareList[i].harvestClock -= 1
+                
+            print("squarelist ", i, " harvest clock is now at: ", squareList[i].harvestClock)
+        except:
+            pass
+    return
 
 def checkForPixels(center, xFar, yFar, pixelRGB = (255, 255, 255)):
     screenshot = pyautogui.screenshot()
-    pyautogui.moveTo(center[0],center[1], 0.2)
+    #pyautogui.moveTo(center[0],center[1], 0.2)
     for x in range(pyautogui.position()[0] - xFar, 
                    pyautogui.position()[0] + xFar ):
 
@@ -403,6 +498,8 @@ def checkForPixels(center, xFar, yFar, pixelRGB = (255, 255, 255)):
 
             if screenshot.getpixel((x, y)) == pixelRGB:
                 return True
+            else:
+                return False
 
 
 def moveClick(x, y, time=0.2):
@@ -480,9 +577,9 @@ def createSquarePlan():
 
         if keyboard.is_pressed('q'):  # if key 'q' is pressed 
             print('finished setting up!')
-            for i in range (len(squareList)):
-                print ("i = ", i+1," this numbers centerPoint is ", squareList[i+1].centerPoint)
-                pyautogui.moveTo(squareList[i+1].centerPoint[0], squareList[i+1].centerPoint[1], 1)
+            #for i in range (len(squareList)):
+            #    print ("i = ", i+1," this numbers centerPoint is ", squareList[i+1].centerPoint)
+            #    pyautogui.moveTo(squareList[i+1].centerPoint[0], squareList[i+1].centerPoint[1], 1)
             break  # finishing the loop
 
     # when left click
@@ -1047,10 +1144,13 @@ def positionToPurpleTop(square, mouseX, mouseY, height, width, topDiff, howFast 
                 else: 
                     break
             for j in range(9999):
-                if screenshot.getpixel((mouseX, mouseY-1)) != purpleRGB:
-                    mouseY -= 1
-                    #pyautogui.moveTo(mouseX,mouseY, 0.001)
-                    #print(2)
+                try:
+                    if screenshot.getpixel((mouseX, mouseY-1)) != purpleRGB:
+                        mouseY -= 1
+                        #pyautogui.moveTo(mouseX,mouseY, 0.001)
+                        #print(2)
+                except:
+                    pass
                 else:
                     break
     #put in parking spot
