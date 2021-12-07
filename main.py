@@ -101,7 +101,7 @@ class SquarePos(Enum):
 def main():
     #mouse event listener
     setupWaterPosition()
-    print("countdown started")
+    #print("countdown started")
     countdownTimer()
 
     baseSquare.realSquare = True
@@ -119,7 +119,7 @@ def main():
     #    harvestQueue.append(squareList[i])
         
     
-    checkForHarvests(30)
+    checkForHarvests(600)
     
     # if esc key is pressed
     if win32api.GetKeyState(0x1B) < 0:
@@ -366,15 +366,16 @@ def refillWater(time = 0.5):
     resetWaterCount()
 
 def checkForHarvests(timeBeforeCheck = 60):
-    print("checking for harvest")
+    #print("checking for harvest")
   
     for i in range(len(squareList)):
         if i == 0: continue
         
 
         if squareList[i].harvestClock == 0:
-            print("havestQueue add ", i, " from check harvest")
+           # print("havestQueue add ", i, " from check harvest")
             harvestQueue.append(squareList[i])
+            #print("added ",i," to harvest list")
             #plantingQueue.append(squareList[i])
 
        
@@ -384,27 +385,28 @@ def checkForHarvests(timeBeforeCheck = 60):
         #    #harvestFlower(squareList[i])
         #    #plantFlower(squareList[i])
 
-        print("calling timer next")
-        print(timeBeforeCheck)
+        #print("calling timer next")
+        #print(timeBeforeCheck)
 
-    print("harvest queue length is ", len(harvestQueue))
-    print("planting queue length is ", len(plantingQueue))
+    #print("harvest queue length is ", len(harvestQueue))
+    #print("planting queue length is ", len(plantingQueue))
     currentHarvestQueue = harvestQueue
     currentPlantingQueue = plantingQueue
     
     harvestQueue.clear
     plantingQueue.clear
-    try:
-        for i in currentHarvestQueue:
-            harvestFlower(i)
-    except:
-        pass
-    try:
-        for i in currentPlantingQueue:
-            plantFlower(i)
-    except:
-        pass
     
+    for i in range (len(currentHarvestQueue)):
+        harvestFlower(currentHarvestQueue[i])
+        #print("harvesting ", i)
+
+    currentHarvestQueue.clear
+
+    for i in range (len(currentPlantingQueue)):
+        plantFlower(currentPlantingQueue[i])
+        #print("planting ", i)
+        
+    currentPlantingQueue.clear
     Timer(timeBeforeCheck, checkForHarvests, args=[timeBeforeCheck]).start()
 
 
@@ -429,7 +431,6 @@ def harvestFlower(square):
     #click square that needs to be harvest
     #moveClick(SqCenterPoint(square))
     moveClick(square.centerPoint[0], square.centerPoint[1])
-    harvestQueue.remove(square)
     #wait to see if pop up comes up
     #if it does click harvest
     screenshot = pyautogui.screenshot()
@@ -451,7 +452,10 @@ def harvestFlower(square):
     #done         
 
 def plantFlower(square, tile = flowerArea.tile1):
+    haveWater = False
+    moveToWater = False
     #click hud shovel
+    
     hudClick(hudArea.shovel)
     #till land
     moveClick(square.centerPoint[0], square.centerPoint[1])
@@ -460,25 +464,30 @@ def plantFlower(square, tile = flowerArea.tile1):
     hudClick(hudArea.plant)
     #click land
     moveClick(square.centerPoint[0], square.centerPoint[1], 1)
-    plantingQueue.remove(square)
+
+    print("check for pixels")
     #check if area menu screen to select plant is present
-    time.sleep(1)
-    if checkForPixels((761,305), 50, 1, (255,255,255)):
+    sleep(0.5)
+    screenshot = pyautogui.screenshot()
+    print("pixel colour = ", screenshot.getpixel((732,365)))
+    if screenshot.getpixel((732,365)) == (255,255,255):
+        print("pixels found")
         while(True):
             screenshot = pyautogui.screenshot()
-            print("in loop")
+            print("in loop finding flowers")
+            
             #if no flowers (vist flower market button pops up)
             if screenshot.getpixel((878, 700)) == (120, 210, 130):
-                print("time to exit")
-                noFlower = True
+                print("no flowers")
                 plantingMenuClick(bagArea.exit, 0.2)
-                break
+                moveToWater = True
 
             elif screenshot.getpixel((680, 492)) != (255,255,255):
+                print("found flower")
                 #click tile
                 plantingMenuClick(tile)
                 #check id
-                #apply stats to land
+                #apply stats to lands
                 #if cannot find ID or get stats default to 1 hour for harvest clock
 
                 square.harvestTime = 60
@@ -486,25 +495,38 @@ def plantFlower(square, tile = flowerArea.tile1):
                 print ("setting timer thread for square")
                 thread = timerThread.myThread(square)
                 thread.start()
-                thread.join()
+                #thread.join()
 
                 #check for harvest cutscene
-                seconds = 2
+                seconds = 4
+                
+                print("checking for harvest cutscene")
                 for i in range(seconds):
                     screenshot = pyautogui.screenshot()
-                    if screenshot.getpixel((345, 271)) == (90,207,148) and screenshot.getpixel((1722, 271)) == (166,212,105):
+                    print("rgb colour1 ", screenshot.getpixel((579, 103)), " rgb colour2 ",screenshot.getpixel((1725, 248)))
+                    if screenshot.getpixel((579, 103)) == (90,207,148) and screenshot.getpixel((1725, 248)) == (166,212,105):
                         moveClick(345,271)
-                        break
+                
                     time.sleep(1)
-            #click water icon
-            hudClick(hudArea.water)
-            #click sqaure
-            moveClick(square.centerPoint[0], square.centerPoint[1])
-            minusWaterCount(1)
-            if getWaterCount() <= 0:
-                refillWater()
-                resetWaterCount()
-            break
+                moveToWater = True
+
+            if(moveToWater):
+                #click water icon
+                hudClick(hudArea.water)
+                #click sqaure
+                moveClick(square.centerPoint[0], square.centerPoint[1])
+                minusWaterCount(1)
+                if getWaterCount() <= 0:
+                    refillWater()
+                    resetWaterCount()
+                    haveWater = True
+            
+            if moveToWater and haveWater:
+                break
+        
+
+        
+        
 
 
     #removeLastPlantedFromQueue()
@@ -534,6 +556,7 @@ def plantFlower(square, tile = flowerArea.tile1):
     #return
 
 def checkForPixels(center, xFar, yFar, pixelRGB = (255, 255, 255)):
+
     screenshot = pyautogui.screenshot()
     #pyautogui.moveTo(center[0],center[1], 0.2)
     for x in range(pyautogui.position()[0] - xFar, 
@@ -543,6 +566,7 @@ def checkForPixels(center, xFar, yFar, pixelRGB = (255, 255, 255)):
                        pyautogui.position()[1] + yFar):
 
             if screenshot.getpixel((x, y)) == pixelRGB:
+                #print("pixel colours of x and y = ", screenshot.getpixel((x, y)))
                 return True
             else:
                 return False

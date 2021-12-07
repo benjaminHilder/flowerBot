@@ -2,4 +2,5 @@ queue = []
 
 queue.append(1)
 
-print(len(queue))
+for i in range (len(queue)):
+    print(i)
