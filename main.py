@@ -22,11 +22,12 @@ import mouseinfo
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 import sys
+import timerThread
 
 script_dir = os.path.dirname(__file__)
 
-
-
+firstRun = True
+nextRun = False
 squareList = []
 baseSquare = Square()
 #newSqaure = Square()
@@ -39,6 +40,8 @@ innerSqaureCornerRight = 0
 innerSqaureCornerUpper = 0
 innerSqaureCornerLower = 0
 
+harvestQueue = []
+plantingQueue = []
 waterCount = 0
 
 waterPos = [0,0]
@@ -111,20 +114,13 @@ def main():
     createSquarePlan()
     
     #harvest everything for consistancy at the start
-    for i in range (len(squareList)):
-        try:
-            harvestFlower(squareList[i+1])
-        except:
-            pass
-
-    for i in range (len(squareList)):
-        try:
-            plantFlower(squareList[i+1], flowerArea.tile1)
-        except:
-            pass
-
+    for i in range(len(squareList)):
+        if i == 0: continue
+        harvestQueue.append(squareList[i])
+        
     
-    checkForHarvests(10)
+    checkForHarvests(5)
+    
     # if esc key is pressed
     if win32api.GetKeyState(0x1B) < 0:
         print("stopping operations")
@@ -370,28 +366,56 @@ def refillWater(time = 0.5):
     resetWaterCount()
 
 def checkForHarvests(timeBeforeCheck = 60):
+    print("checking for harvest")
+  
+    for i in range(len(squareList)):
+        if i == 0: continue
+        
 
-    def callCheckHarvest():
-        print("calling check harvest")
-        searchSquaresForTime()
-        Timer(timeBeforeCheck,callCheckHarvest).start()
+        if squareList[i].harvestClock == 0:
+            print("havestQueue add ", i, " from check harvest")
+            harvestQueue.append(squareList[i])
+            #plantingQueue.append(squareList[i])
 
-    callCheckHarvest()
+       
+        #    thread = timerThread.myThread(squareList[i],i)
+        #    thread.start()
+        #    thread.join()
+        #    #harvestFlower(squareList[i])
+        #    #plantFlower(squareList[i])
+
+        print("calling timer next")
+        print(timeBeforeCheck)
+
+    print("harvest queue length is ", len(harvestQueue))
+    print("planting queue length is ", len(plantingQueue) )
+    try:
+        for i in range (len(harvestQueue)):
+            harvestFlower(harvestQueue[i])
+    except:
+        pass
+    try:
+        for i in range (len(plantingQueue)):
+            plantFlower(plantingQueue[i])
+    except:
+        pass
+    
+    Timer(timeBeforeCheck, checkForHarvests, args=[timeBeforeCheck]).start()
 
 
+    #callCheckHarvest(timeBeforeCheck)
 
-    #s = sched.scheduler(time.time, time.sleep)
-    #def call 
-    ##every minute check go through square list to see if any squares harvestClocks are at 1
-    ##have a clock that counts down every 60 seconds
-    #def timeout():
-    #    searchSquaresForTime()
-    #
-    #t = Timer(timeBeforeCheck, timeout)
-    #t.start()
-    ##if so harvest land function
-    ##replantFlower (which resets the stats from plantFlower function)
-    ##if curr
+    
+def harvesting():
+    if len(harvestQueue) != 0:
+        harvestFlower(harvestQueue[0])
+
+def removeLastHarvestedFromQueue():
+    print("removing from harvesting queue")
+    del harvestQueue[0]
+def removeLastPlantedFromQueue():
+    print("removing from planting queue")
+    del plantingQueue[0]
 
 def harvestFlower(square):
 
@@ -400,6 +424,7 @@ def harvestFlower(square):
     #click square that needs to be harvest
     #moveClick(SqCenterPoint(square))
     moveClick(square.centerPoint[0], square.centerPoint[1])
+    harvestQueue.remove(square)
     #wait to see if pop up comes up
     #if it does click harvest
     screenshot = pyautogui.screenshot()
@@ -413,6 +438,11 @@ def harvestFlower(square):
         moveClick(1000, 572)
     
     square.needsHarvest = False
+    print("adding to planting queue from harvestFlower")
+    plantingQueue.append(square)
+
+
+    #removeLastHarvestedFromQueue
     #done         
 
 def plantFlower(square, tile = flowerArea.tile1):
@@ -425,6 +455,7 @@ def plantFlower(square, tile = flowerArea.tile1):
     hudClick(hudArea.plant)
     #click land
     moveClick(square.centerPoint[0], square.centerPoint[1], 1)
+    plantingQueue.remove(square)
     #check if area menu screen to select plant is present
     if checkForPixels((761,305), 50, 1, (255,255,255)):
         while(True):
@@ -443,8 +474,14 @@ def plantFlower(square, tile = flowerArea.tile1):
                 #check id
                 #apply stats to land
                 #if cannot find ID or get stats default to 1 hour for harvest clock
+
                 square.harvestTime = 60
                 square.harvestClock = square.harvestTime
+                print ("setting timer thread for square")
+                thread = timerThread.myThread(square)
+                thread.start()
+                thread.join()
+
                 #check for harvest cutscene
                 seconds = 2
                 for i in range(seconds):
@@ -465,27 +502,31 @@ def plantFlower(square, tile = flowerArea.tile1):
                 break
 
 
-def searchSquaresForTime():
+    #removeLastPlantedFromQueue()
+
+
+#def searchSquaresForTime():
+
     #print("searching harvest")
-    for i in range(len(squareList)):
-        if i == 0: continue
-        try:
-            if squareList[i].harvestClock == 1:
-                print("harvesting ", i)
-                harvestFlower(squareList[i])
-                
-                squareList[i].harvestClock = squareList[i].harvestTime
-
-                print("planting ", i)
-                plantFlower(squareList[i])
-
-            else:
-                squareList[i].harvestClock -= 1
-                
-            print("squarelist ", i, " harvest clock is now at: ", squareList[i].harvestClock)
-        except:
-            pass
-    return
+    #for i in range(len(squareList)):
+    #    if i == 0: continue
+    #    try:
+    #        if squareList[i].harvestClock == 1:
+    #            print("harvesting ", i)
+    #            harvestFlower(squareList[i])
+    #            
+    #            squareList[i].harvestClock = squareList[i].harvestTime
+#
+    #            print("planting ", i)
+    #            plantFlower(squareList[i])
+#
+    #        else:
+    #            squareList[i].harvestClock -= 1
+    #            
+    #        print("squarelist ", i, " harvest clock is now at: ", squareList[i].harvestClock)
+    #    except:
+    #        pass
+    #return
 
 def checkForPixels(center, xFar, yFar, pixelRGB = (255, 255, 255)):
     screenshot = pyautogui.screenshot()
