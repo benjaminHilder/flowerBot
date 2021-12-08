@@ -107,12 +107,14 @@ class SquarePos(Enum):
 
 
 def main():
-    #countdownTimer()
-    
+    #
+    print("move mouse to area you want to use (no scrolling yet)")
+    print("press esc when done")
     startUp()
+    print("press s on water")
     setupWaterPosition()
-    #print("countdown started")
-
+    print("countdown started")
+    countdownTimer()
 
     baseSquare.realSquare = True
     createDefaultSquare(baseSquare)
@@ -444,7 +446,7 @@ def checkFirstSquarePos():
 def waitTillPlantsAreLoaded():
     while (True):
         print("waiting for plants to load")
-        screenshot = pyautogui.screenshot
+        screenshot = pyautogui.screenshot()
         hudClick(hudArea.select)
         moveClick(squareList[1].centerPoint[0], squareList[1].centerPoint[1])
         if screenshot.getpixel((1635, 404)) == (255,255,255):
@@ -461,6 +463,7 @@ def checkForHarvests(timeBeforeCheck = 60):
     #sleep to wait for the game to load
     sleep(20)
     #move back to where we were 
+    hudClick(hudArea.select)
     playbackRefresh("refresh_positioning.json")
     waitTillPlantsAreLoaded()
     checkFirstSquarePos()
@@ -688,6 +691,7 @@ def createSquarePlan():
         leftButtonState = win32api.GetKeyState(0x01)
         rightButtonState = win32api.GetKeyState(0x02)
         keyS_State = win32api.GetKeyState(0x53)
+        keyQ_State = win32api.GetKeyState(0x51)
         mouseX, mouseY = pyautogui.position()
         #createSquarePlan(mouseX, mouseY)
 
@@ -728,7 +732,7 @@ def createSquarePlan():
         if keyS_State > -1:
             canPlace = True
 
-        if keyboard.is_pressed('q'):  # if key 'q' is pressed 
+        if keyQ_State < 0:  # if key 'q' is pressed 
             print('finished setting up!')
             #for i in range (len(squareList)):
             #    print ("i = ", i+1," this numbers centerPoint is ", squareList[i+1].centerPoint)
