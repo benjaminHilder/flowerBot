@@ -23,6 +23,11 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 import sys
 import timerThread
+from pynput import mouse, keyboard
+from time import time
+import recorder
+import json
+
 
 script_dir = os.path.dirname(__file__)
 
@@ -45,6 +50,9 @@ plantingQueue = []
 waterCount = 0
 
 waterPos = [0,0]
+
+refreshIMG = None
+
 
 blank = np.zeros((1080,1920,3), dtype='uint8')
 
@@ -99,10 +107,12 @@ class SquarePos(Enum):
 
 
 def main():
-    #mouse event listener
+    #countdownTimer()
+    
+    startUp()
     setupWaterPosition()
     #print("countdown started")
-    countdownTimer()
+
 
     baseSquare.realSquare = True
     createDefaultSquare(baseSquare)
@@ -112,101 +122,20 @@ def main():
     pyautogui.moveTo(squareList[0].topPoint[0], squareList[0].leftPoint[1], 2)
     #squareList.append(newSqaure),
     createSquarePlan()
-    
+
     #harvest everything for consistancy at the start
     #for i in range(len(squareList)):
     #    if i == 0: continue
     #    harvestQueue.append(squareList[i])
-        
-    
+
+
     checkForHarvests(600)
-    
+
     # if esc key is pressed
     if win32api.GetKeyState(0x1B) < 0:
         print("stopping operations")
         sys.exit()
 
-        
-    
-    
-   #try:
-   #    while True:
-   #        checkForHarvests(60)
-   #except KeyboardInterrupt:
-   #    pass
-
-
-    
-    #hudClick(hudArea.bag)
-    #hudClick(hudArea.select,0.01)
-    #hudClick(hudArea.shovel, 1)
-    #hudClick(hudArea.plant, 0.0001)
-    #hudClick(hudArea.water)
-    #hudClick(hudArea.scissor)
-#
-    #bagClick(bagArea.map)
-    #bagClick(bagArea.inventory)
-#
-    #bagClick(bagArea.flowers)
-    #flowerMenuClick(flowerArea.tile1)
-    #flowerMenuClick(flowerArea.tile2)
-    #flowerMenuClick(flowerArea.tile3)
-    #flowerMenuClick(flowerArea.tile4)
-    #flowerMenuClick(flowerArea.tile5)
-    #flowerMenuClick(flowerArea.tile6)
-    #flowerMenuClick(flowerArea.tile7)
-    #flowerMenuClick(flowerArea.tile8)
-    #flowerMenuClick(flowerArea.tile9)
-    #flowerMenuClick(flowerArea.tile10)
-    #flowerMenuClick(flowerArea.tile11)
-    #flowerMenuClick(flowerArea.tile12)
-#
-    #flowerMenuClick(flowerArea.rarity)
-    #flowerMenuClick(flowerArea.land)
-    #flowerMenuClick(flowerArea.planted)
-    #flowerMenuClick(flowerArea.network)
-    #flowerMenuClick(flowerArea.sort)
-    #flowerMenuClick(flowerArea.scending)
-#
-    #flowerMenuClick(flowerArea.skipForward)
-    #flowerMenuClick(flowerArea.skipBackward)
-    #flowerMenuClick(flowerArea.skipToEnd)
-    #flowerMenuClick(flowerArea.skipToStart)
-    #bagClick(bagArea.exit)
-    #
-#
-    #hudCommands(hudAction.selectLand, baseSquare, 1)
-    #hudCommands(hudAction.tillLand, baseSquare, 1)
-    ##hudCommands(hudAction.plantFlower, baseSquare, flowerArea.tile1, 2)
-    #hudCommands(hudAction.waterLand, baseSquare, 1)
-    #hudCommands(hudAction.cutPlant, baseSquare, 1)
-    
-
-    #bagClick(bagArea.exit)
-    
-
-    #print (squareList[0].leftPoint[0])
-    #for i in range (10):
-        #addSqaure(SquarePos.top_left, baseSquare, True)
-    #cv.waitKey(0)
-    #print("len: ", len(squareList))
-    #for i, sqaure in enumerate(squareList):
-    #    if squareList[i].realSquare == True:
-    #            moveClickSquare(squareList[i], 1)
- 
-    #for i, sqaure in enumerate(squareList):
-         #moveClick(squareList[i].rightPoint[0],squareList[i].rightPoint[1], 1)
-         #moveClick(squareList[i].topPoint[0],squareList[i].topPoint[1], 1)
-         #moveClick(squareList[i].leftPoint[0],squareList[i].leftPoint[1], 1)
-        # moveClick(squareList[i].bottomPoint[0],squareList[i].bottomPoint[1], 1)
-    #moveClick(squareList[0].rightPoint[0],squareList[0].rightPoint[1], 1) 
-    #moveClick(squareList[0].topPoint[0],squareList[0].topPoint[1], 1)
-    #moveClick(squareList[0].leftPoint[0],squareList[0].leftPoint[1], 1)
-    #moveClick(squareList[0].bottomPoint[0],squareList[0].bottomPoint[1], 1)
-
-    #if cv.waitKey(1) == ord('q'):
-        #cv.destroyAllWindows
-        #break
 
 
 def hudClick(hudCommand, time=0.2):
@@ -342,7 +271,136 @@ def plantingMenuClick(plantingCommand, time = 0.2):
 
     if plantingCommand == bagArea.exit:
         moveClick(1316,333, time)
-    
+def startUp():
+    #refresh page
+    pyautogui.keyDown("ctrl")
+    pyautogui.press("r")
+    pyautogui.keyUp("ctrl")
+#
+    ##save what the refresh IMG looks like
+    #refreshIMG = pyautogui.screenshot()
+    recordingRefresh()
+
+    #playbackRefresh("refresh_positioning.json")
+
+def recordingRefresh():
+    recorder.runListeners()
+    print("Recording duration: {} seconds".format(recorder.elapsed_time()))
+
+    print(json.dumps(recorder.input_events))
+
+    script_dir = os.path.dirname(__file__)
+    filepath = os.path.join(script_dir, 
+                            'recordings', 
+                            '{}.json'.format(recorder.OUTPUT_FILENAME))
+    with open(filepath, 'w') as outfile:
+        json.dump(recorder.input_events, outfile, indent=4)
+        
+
+def playbackRefresh(filename):
+    script_dir = os.path.dirname(__file__)
+    filepath = os.path.join(script_dir, 
+                            'recordings', 
+                            filename)
+    with open(filepath, 'r') as jsonfile:
+        # parse the json
+        data = json.load(jsonfile)
+        
+        #loop over each action
+        for index, action in enumerate(data):
+            action_start_time = time()
+            #loop for escape input to exit
+            if action['button'] == 'Key.esc':
+                break
+            
+            #perform the action
+            if action['type'] == 'keyDown':
+                key = convertKey(action['button'])
+                pyautogui.keyDown(key)
+            elif action['type'] == 'keyUp':
+                key = convertKey(action['button'])
+                pyautogui.keyUp(key)
+            elif action['type'] == 'clickDown':
+                if action['button'] == "Button.left":
+
+                    #move to click down pos
+                    pyautogui.moveTo(action['pos'][0], action['pos'][1])
+
+                    #find the clickUp in the actions forward
+                    for i in range(9999):
+                        #once found
+                        try:
+                            if data[index + i]['type'] == 'clickUp' and data[index + i]['button'] == 'Button.left':
+                                #set it to next action
+                                next_action = data[index + i]
+                                break
+                        except:
+                            break
+                    #get the amount of time we need to drag ause it
+                    elapsed_time = next_action['time'] - action['time']
+
+                    pyautogui.dragTo(next_action['pos'][0], next_action['pos'][1], elapsed_time, button='left')
+                elif action['button'] == 'Button.right':
+                    #move to click down pos
+                    pyautogui.moveTo(action['pos'][0], action['pos'][1])
+                    #find the clickUp in the actions forward
+                    for i in range(9999):
+                        #once found
+                        try:
+                            if data[index + i]['type'] == 'clickUp' and data[index + i]['button'] == 'Button.right':
+                                #set it to next action
+                                next_action = data[index + i]
+                                break
+                        except:
+                            break
+                    #get the amount of time we need to drag ause it
+                    elapsed_time = next_action['time'] - action['time']
+                    pyautogui.dragTo(next_action['pos'][0], next_action['pos'][1], elapsed_time, button='right')
+
+                
+            
+            # then sleep until next action should occur
+            try:
+                next_action = data[index + 1]
+            except IndexError:
+                break
+            elapsed_time = next_action['time'] - action['time']
+            if elapsed_time < 0:
+                raise Exception('Unexpected action ordering.')
+  
+            elapsed_time -=(time() - action_start_time)
+            if elapsed_time < 0:
+                elapsed_time = 0
+            print('sleeping for {}'.format(elapsed_time))
+            sleep(elapsed_time)
+
+
+
+def convertKey(button):
+    PYNPUT_SPECIAL_CASE_MAP = {
+        'alt_l': 'altleft',
+        'alt_r': 'altright',
+        'alt_gr': 'altright',
+        'caps_lock': 'capslock',
+        'ctrl_l': 'ctrlleft',
+        'ctrl_r': 'ctrlright',
+        'page_down': 'pagedown',
+        'page_up': 'pageup',
+        'shift_l': 'shiftleft',
+        'shift_r': 'shiftright',
+        'num_lock': 'numlock',
+        'print_screen': 'printscreen',
+        'scroll_lock': 'scrolllock',
+    }
+
+    # example: 'Key.F9' should return 'F9', 'w' should return as 'w'
+    cleaned_key = button.replace('Key.', '')
+
+    if cleaned_key in PYNPUT_SPECIAL_CASE_MAP:
+        return PYNPUT_SPECIAL_CASE_MAP[cleaned_key]
+
+    return cleaned_key
+
 def setupWaterPosition():
     print("Set position of water refill")
     while (True):
@@ -365,31 +423,56 @@ def refillWater(time = 0.5):
     moveClick(waterPos[0], waterPos[1], time)
     resetWaterCount()
 
+def checkFirstSquarePos():
+    pyautogui.moveTo(squareList[0].centerPoint)
+    oldCenterPoint = squareList[0].centerPoint
+    #get pos of purple select
+    positionToPurpleTop(squareList[0], pyautogui.position()[0],pyautogui.position()[1],squareList[0].height,squareList[0].width, squareList[0].topDiff)
+    if squareList[0].centerPoint != oldCenterPoint:
+        xDiff = squareList[0].centerPoint[0] - oldCenterPoint[0]
+        yDiff = squareList[0].centerPoint[1] - oldCenterPoint[1]
+
+        for i in range (len(squareList)):
+            if i == 0: continue
+            #set new positions for each squares
+
+            try:
+                squareList[i].centerPoint[0] += xDiff
+                squareList[i].centerPoint[1] += yDiff
+            except:
+                pass
+def waitTillPlantsAreLoaded():
+    while (True):
+        print("waiting for plants to load")
+        screenshot = pyautogui.screenshot
+        hudClick(hudArea.select)
+        moveClick(squareList[1].centerPoint[0], squareList[1].centerPoint[1])
+        if screenshot.getpixel((1635, 404)) == (255,255,255):
+            break
+    pass
+
 def checkForHarvests(timeBeforeCheck = 60):
     #print("checking for harvest")
-  
+
+    #refresh the page to avoid memory crash of web browerser
+    pyautogui.keyDown("ctrl")
+    pyautogui.press("r")
+    pyautogui.keyUp("ctrl")
+    #sleep to wait for the game to load
+    sleep(20)
+    #move back to where we were 
+    playbackRefresh("refresh_positioning.json")
+    waitTillPlantsAreLoaded()
+    checkFirstSquarePos()
+    
+
     for i in range(len(squareList)):
         if i == 0: continue
         
-
         if squareList[i].harvestClock == 0:
-           # print("havestQueue add ", i, " from check harvest")
+
             harvestQueue.append(squareList[i])
-            #print("added ",i," to harvest list")
-            #plantingQueue.append(squareList[i])
-
-       
-        #    thread = timerThread.myThread(squareList[i],i)
-        #    thread.start()
-        #    thread.join()
-        #    #harvestFlower(squareList[i])
-        #    #plantFlower(squareList[i])
-
-        #print("calling timer next")
-        #print(timeBeforeCheck)
-
-    #print("harvest queue length is ", len(harvestQueue))
-    #print("planting queue length is ", len(plantingQueue))
+  
     currentHarvestQueue = harvestQueue
     currentPlantingQueue = plantingQueue
     
@@ -1066,6 +1149,8 @@ def positionNextSquare2(square, posDir, settingWithMouse = True):
     topDiff = squareList[0].innerTop[1] - squareList[0].topPoint[1]
     rightDiff = squareList[0].rightPoint[0] - squareList[0].innerRight[0]
     bottomDiff = squareList[0].bottomPoint[1] - squareList[0].innerBottom[1]
+    
+    square.topDiff = topDiff
 
     previousSquare = squareList[-2]
     #print ("index of prev: ", squareList.index(previousSquare))
@@ -1251,6 +1336,9 @@ def positionToPurpleTop(square, mouseX, mouseY, height, width, topDiff, howFast 
     if screenshot.getpixel((mouseX, mouseY-1)) != purpleRGB:
         mouseY -=1
     #pyautogui.moveTo(mouseX, mouseY, 0.001)
+
+    square.height = height
+    square.width = width
     halfHeight = height/2
     halfWidth = width/2
 

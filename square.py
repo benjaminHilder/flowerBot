@@ -9,6 +9,9 @@ class Square:
         self.harvestTime = 60
         self.harvestClock = 0
 
+        self.height = 0
+        self.width = 0
+
         self.centerPoint = [0,0]
 
         self.leftPoint = [0,0]
