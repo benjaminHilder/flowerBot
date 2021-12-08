@@ -1,38 +1,20 @@
 [
     {
-        "time": 1.6023633480072021,
+        "time": 1.5283453464508057,
         "type": "clickDown",
         "button": "Button.left",
         "pos": [
-            1264,
-            14
+            1010,
+            0
         ]
     },
     {
-        "time": 1.6923828125,
+        "time": 1.6173653602600098,
         "type": "clickUp",
         "button": "Button.left",
         "pos": [
-            1264,
-            14
-        ]
-    },
-    {
-        "time": 13.231484174728394,
-        "type": "clickDown",
-        "button": "Button.left",
-        "pos": [
-            1329,
-            244
-        ]
-    },
-    {
-        "time": 15.237937688827515,
-        "type": "clickUp",
-        "button": "Button.left",
-        "pos": [
-            1323,
-            251
+            1010,
+            0
         ]
     }
 ]

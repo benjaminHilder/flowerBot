@@ -393,6 +393,7 @@ def convertKey(button):
         'num_lock': 'numlock',
         'print_screen': 'printscreen',
         'scroll_lock': 'scrolllock',
+
     }
 
     # example: 'Key.F9' should return 'F9', 'w' should return as 'w'

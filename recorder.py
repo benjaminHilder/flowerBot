@@ -70,6 +70,7 @@ def on_press(key):
         return
     else:
         unreleased_keys.append(key)
+        print("", key)
     try:
         record_event(EventType.KEYDOWN, elapsed_time(), key.char)
     except AttributeError:
