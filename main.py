@@ -27,7 +27,7 @@ from pynput import mouse, keyboard
 from time import time
 import recorder
 import json
-import getIngamePositionTest
+import cv2
 
 from pytesseract import pytesseract
 
@@ -420,7 +420,7 @@ def plantingMenuClick(plantingCommand, time = 0.2):
             moveClick(1044,305, time)   
 def setUp():
 
-    moveClick(1541, 109, 0.3)
+    moveClick(1665, 109, 0.3)
     pyautogui.write('[board click]')
     hudClick(hudArea.water)
     #0x53 == S key
@@ -486,20 +486,21 @@ def getIngamePos_and_landType():
     landString = None
     landEnum = None
     #print("Taking a screenshot...")
-    screenshot = pyautogui.screenshot(region=(1450, 120, 470, 900))
+    screenshot = pyautogui.screenshot(region=(1600, 146, 150, 900))
 
     #converting pyautogui screenshot into one that cv2 can read
     open_cv_image = np.array(screenshot) 
      #Convert RGB to BGR 
     open_cv_image = open_cv_image[:, :, ::-1].copy()
-
     words_in_image = pytesseract.image_to_string(open_cv_image)
     word_list = words_in_image.split()
 
+
+
     for i in range (len(word_list)):
 
-        if word_list[i] == "Tile":
-            x = word_list[i+1]
+        if word_list[i] == "(":
+            x = word_list[i]
             #print("raw x ", x)
             xClean1 =x.replace('(', '')
             xClean2 = xClean1.replace(' ', '')
@@ -509,7 +510,7 @@ def getIngamePos_and_landType():
             xInt = int(xFullyClean)
             #print("cleaned x ", xClean3)
 
-            y = word_list[i+2]
+            y = word_list[i+1]
             #print("raw y ", y)
             yClean1 = y.replace(' ', '')
             yClean2 = yClean1.replace('©', '')
@@ -519,7 +520,7 @@ def getIngamePos_and_landType():
             #print("cleaned y ",yClean2)
 
             try:
-                landString = word_list[i+4] 
+                landString = word_list[i+3] 
             except:
                 pass
         if landString != None:
@@ -1219,13 +1220,11 @@ def createFarmingSquares():
                 #if mouse position is outside of squares position
                 #detect what direction that is
                 if isNextTo:
-                    print("isNextTo")
                     if squarePos == squarePos.top_left:
                         #if centerpoint distance hasn't been created for this distance
                         #add square based on the default square
 
                         if topLeftCenterPointDistance == [0,0]:
-                            print("TLCD == 0,0")
                             newSquare = Square()
                             positionNextSquare(newSquare, squareList[i], squarePos.top_left)
                             newSquare.centerPoint = SqCenterPoint(newSquare)
@@ -1239,18 +1238,15 @@ def createFarmingSquares():
                             
                             squareList.append(newSquare)
                             
-                            print("squareList i centerpoint", squareList[i].centerPoint)
-                            print("newSquare centerpoint", newSquare.centerPoint)
+
 
                             topLeftCenterPointDistance[0] = squareList[i].centerPoint[0] - newSquare.centerPoint[0]
                             topLeftCenterPointDistance[1] = squareList[i].centerPoint[1] - newSquare.centerPoint[1]
-                            print("old square top point: ", squareList[i].topPoint)
-                            print("new square top point: ", newSquare.topPoint)
-                            print ("topLeftCenterPointDistance: ", topLeftCenterPointDistance)
+
                             print("success")
                             
                         elif topLeftCenterPointDistance != [0,0]:
-                            print("TLCD != 0,0")
+
                             #confirm with in game pos if its correct
 
                             potentialOutX = squareList[i].centerPoint[0] - topLeftCenterPointDistance[0]
@@ -1258,22 +1254,12 @@ def createFarmingSquares():
                             moveClick(potentialOutX, potentialOutY)
                             potentialInX, potentialInY, land = getIngamePos_and_landType()
 
-                            print("potentialInX: ", potentialInX)
-                            print("potentialInY: ", potentialInY)
-
-                            print('squareList[i].ingamePos[0]-1: ', squareList[i].ingamePos[0]-1)
-                            print('squareList[i].ingamePos[1]-1: ', squareList[i].ingamePos[1]-1)
-
-
                             #if so 
                             # add it to the list
                             if potentialInY == squareList[i].ingamePos[1]-1:
-                                print("found")
+
                                 newSquare = Square()
                                 positionNextSquare(newSquare, squareList[i], squarePos.top_left)
-
-                                print("squareList[i] top point: ", squareList[i].topPoint)
-                                print("newSquare ", newSquare.topPoint)
 
                                 #newSquare.centerPoint = [potentialOutX, potentialOutY]
                                 newSquare.centerPoint = SqCenterPoint(newSquare)
@@ -1283,9 +1269,67 @@ def createFarmingSquares():
 
                                 newSquare.ingamePos = [ingameX, ingameY]
                                 #newSquare.landType = land
-                                
 
                                 squareList.append(newSquare)
+                                print("success")
+                            #if not
+                            # move the cursor in a position that would be correct
+                            #for example if we are too much to the left side, check right side
+                            #keep checking until we find desired ingame pos
+                            elif potentialInY != squareList[i].ingamePos[1]-1:
+                                expectedIngamePos = [squareList[1].ingamePos[0] + topRightCenterPointDistance[0],squareList[1].ingamePos[1] + topRightCenterPointDistance[1]]
+                                print ("Incorrect ingamepos")
+                                
+                    if squarePos == squarePos.top_right:
+                        #if centerpoint distance hasn't been created for this distance
+                        #add square based on the default square
+
+                        if topRightCenterPointDistance == [0,0]:
+                            newSquare = Square()
+                            positionNextSquare(newSquare, squareList[i], squarePos.top_right)
+                            newSquare.centerPoint = SqCenterPoint(newSquare)
+
+
+                            moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
+                            ingameX, ingameY, land = getIngamePos_and_landType()
+
+                            newSquare.ingamePos = [ingameX, ingameY]
+                            newSquare.landType = land
+                            
+                            squareList.append(newSquare)
+                            
+                            topRightCenterPointDistance[0] = squareList[i].centerPoint[0] - newSquare.centerPoint[0]
+                            topRightCenterPointDistance[1] = squareList[i].centerPoint[1] - newSquare.centerPoint[1]
+
+                            print("success")
+                            
+                        elif topRightCenterPointDistance != [0,0]:
+
+                            #confirm with in game pos if its correct
+
+                            potentialOutX = squareList[i].centerPoint[0] - topRightCenterPointDistance[0]
+                            potentialOutY = squareList[i].centerPoint[1] - topRightCenterPointDistance[1]
+                            moveClick(potentialOutX, potentialOutY)
+                            potentialInX, potentialInY, land = getIngamePos_and_landType()
+
+                            #if so 
+                            # add it to the list
+                            if potentialInY == squareList[i].ingamePos[1]-1:
+
+                                newSquare = Square()
+                                positionNextSquare(newSquare, squareList[i], squarePos.top_right)
+
+                                #newSquare.centerPoint = [potentialOutX, potentialOutY]
+                                newSquare.centerPoint = SqCenterPoint(newSquare)
+                                moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
+                                ingameX, ingameY, land = getIngamePos_and_landType()
+                                
+
+                                newSquare.ingamePos = [ingameX, ingameY]
+                                #newSquare.landType = land
+
+                                squareList.append(newSquare)
+                                print("success")
                             #if not
                             # move the cursor in a position that would be correct
                             #for example if we are too much to the left side, check right side
@@ -1293,16 +1337,134 @@ def createFarmingSquares():
                             elif potentialInY != squareList[i].ingamePos[1]-1:
                                 expectedIngamePos = [squareList[1].ingamePos[0] + topLeftCenterPointDistance[0],squareList[1].ingamePos[1] + topLeftCenterPointDistance[1]]
                                 print ("Incorrect ingamepos")
-                                pass
                             
-                            
-                        pass
-                    if squarePos == squarePos.top_right:
-                        pass
                     if squarePos == squarePos.bottom_left:
-                        pass
+                        #if centerpoint distance hasn't been created for this distance
+                        #add square based on the default square
+
+                        if bottomLeftCenterPointDistance == [0,0]:
+                            newSquare = Square()
+                            positionNextSquare(newSquare, squareList[i], squarePos.bottom_left)
+                            newSquare.centerPoint = SqCenterPoint(newSquare)
+
+
+
+                            moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
+                            ingameX, ingameY, land = getIngamePos_and_landType()
+
+                            newSquare.ingamePos = [ingameX, ingameY]
+                            newSquare.landType = land
+                            
+                            squareList.append(newSquare)
+                            
+                            print("squareList[i].centerPoint[0]: ", squareList[i].centerPoint[0])
+                            print("newSquare.centerPoint[0]: ", newSquare.centerPoint[0])
+                            print("squareList[i].centerPoint[1]: ", squareList[i].centerPoint[1])
+                            print("newSquare.centerPoint[1]: ", newSquare.centerPoint[1])
+
+                            bottomLeftCenterPointDistance[0] = squareList[i].centerPoint[0] - newSquare.centerPoint[0]
+                            bottomLeftCenterPointDistance[1] = newSquare.centerPoint[1] - squareList[i].centerPoint[1]
+
+                            print("bottomLeftCenterPointDistance[0]: ", bottomLeftCenterPointDistance[0])
+                            print("bottomLeftCenterPointDistance[1]: ", bottomLeftCenterPointDistance[1])
+                            print("success")
+                            
+                        elif bottomLeftCenterPointDistance != [0,0]:
+
+                            #confirm with in game pos if its correct
+
+                            potentialOutX = squareList[i+1].centerPoint[0] - bottomLeftCenterPointDistance[0]
+                            potentialOutY = squareList[i+1].centerPoint[1] + bottomLeftCenterPointDistance[1]
+                            #moveClick(potentialOutX, potentialOutY)
+
+                            moveClick(squareList[i+1].centerPoint[0], squareList[i].centerPoint[1])
+                            potentialInX, potentialInY, land = getIngamePos_and_landType()
+
+                            #if so 
+                            # add it to the list
+                            print("portentialInY: ", potentialInY)
+                            print("squareList[i].ingamePos[1]+1: ", squareList[i].ingamePos[1]+1)
+
+                            if potentialInY == squareList[i].ingamePos[1]+1:
+
+                                newSquare = Square()
+                                positionNextSquare(newSquare, squareList[i], squarePos.bottom_left)
+
+                                #newSquare.centerPoint = [potentialOutX, potentialOutY]
+                                newSquare.centerPoint = SqCenterPoint(newSquare)
+                                moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
+                                ingameX, ingameY, land = getIngamePos_and_landType()
+                                
+
+                                newSquare.ingamePos = [ingameX, ingameY]
+                                #newSquare.landType = land
+
+                                squareList.append(newSquare)
+                                print("success")
+                            #if not
+                            # move the cursor in a position that would be correct
+                            #for example if we are too much to the left side, check right side
+                            #keep checking until we find desired ingame pos
+                            elif potentialInY != squareList[i].ingamePos[1]-1:
+                                expectedIngamePos = [squareList[1].ingamePos[0] + bottomLeftCenterPointDistance[0],squareList[1].ingamePos[1] + bottomLeftCenterPointDistance[1]]
+                                print ("Incorrect ingamepos")
                     if squarePos == squarePos.bottom_right:
-                        pass
+                        #if centerpoint distance hasn't been created for this distance
+                        #add square based on the default square
+
+                        if bottomRightCenterPointDistance == [0,0]:
+                            newSquare = Square()
+                            positionNextSquare(newSquare, squareList[i], squarePos.bottom_right)
+                            newSquare.centerPoint = SqCenterPoint(newSquare)
+
+
+                            moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
+                            ingameX, ingameY, land = getIngamePos_and_landType()
+
+                            newSquare.ingamePos = [ingameX, ingameY]
+                            newSquare.landType = land
+                            
+                            squareList.append(newSquare)
+                            
+                            bottomRightCenterPointDistance[0] = squareList[i].centerPoint[0] - newSquare.centerPoint[0]
+                            bottomRightCenterPointDistance[1] = squareList[i].centerPoint[1] - newSquare.centerPoint[1]
+
+                            print("success")
+                            
+                        elif bottomRightCenterPointDistance != [0,0]:
+
+                            #confirm with in game pos if its correct
+
+                            potentialOutX = squareList[i].centerPoint[0] - bottomRightCenterPointDistance[0]
+                            potentialOutY = squareList[i].centerPoint[1] - bottomRightCenterPointDistance[1]
+                            moveClick(potentialOutX, potentialOutY)
+                            potentialInX, potentialInY, land = getIngamePos_and_landType()
+
+                            #if so 
+                            # add it to the list
+                            if potentialInY == squareList[i].ingamePos[1]+1:
+
+                                newSquare = Square()
+                                positionNextSquare(newSquare, squareList[i], squarePos.bottom_right)
+
+                                #newSquare.centerPoint = [potentialOutX, potentialOutY]
+                                newSquare.centerPoint = SqCenterPoint(newSquare)
+                                moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
+                                ingameX, ingameY, land = getIngamePos_and_landType()
+                                
+
+                                newSquare.ingamePos = [ingameX, ingameY]
+                                #newSquare.landType = land
+
+                                squareList.append(newSquare)
+                                print("success")
+                            #if not
+                            # move the cursor in a position that would be correct
+                            #for example if we are too much to the left side, check right side
+                            #keep checking until we find desired ingame pos
+                            elif potentialInY != squareList[i].ingamePos[1]-1:
+                                expectedIngamePos = [squareList[1].ingamePos[0] + bottomRightCenterPointDistance[0],squareList[1].ingamePos[1] + bottomRightCenterPointDistance[1]]
+                                print ("Incorrect ingamepos")
 
                     
 

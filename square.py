@@ -11,6 +11,7 @@ class Square:
         self.ingamePos = None
         self.landType = None
         self.isWaterRefill = False
+        self.waterRefillPos = []
         self.harvestTime = 60
         self.harvestClock = 0
 

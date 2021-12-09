@@ -14,10 +14,10 @@ from time import sleep
 
 pytesseract.tesseract_cmd = "E:\\Program Files\\Tesseract-OCR\\tesseract.exe"
 
-x_start_point = 1365
-y_start_point = 120
+x_start_point = 1600
+y_start_point = 146
 
-x_howFar = 555
+x_howFar = 150
 y_howFar = 900
 
 xPos = 0
@@ -40,7 +40,7 @@ def getIngamePos_and_landType():
 
     #words_in_image = pytesseract.image_to_string(open_cv_image)
 
-    cv2.imshow("show", open_cv_image)
+    cv2.imshow("show", adaptive)
     cv2.waitKey(0)
     #word_list = words_in_image.split()
 #
