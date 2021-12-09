@@ -5,12 +5,14 @@ class Square:
 
         self.name = ""
         self.ID = 0
+        self.ingamePos = [0,0]
         self.landType = ""
         self.harvestTime = 60
         self.harvestClock = 0
 
         self.height = 0
         self.width = 0
+        self.topDiff = [0,0]
 
         self.centerPoint = [0,0]
 

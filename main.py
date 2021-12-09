@@ -27,6 +27,9 @@ from pynput import mouse, keyboard
 from time import time
 import recorder
 import json
+import getIngamePositionTest
+
+from pytesseract import pytesseract
 
 
 script_dir = os.path.dirname(__file__)
@@ -53,8 +56,12 @@ waterPos = [0,0]
 
 refreshIMG = None
 
-
+landXPos = 0
+landYPos = 0
+landType = ""
 blank = np.zeros((1080,1920,3), dtype='uint8')
+
+consoleActive = False
 
 #wincap = WindowCapture()
 class hudArea(Enum):
@@ -98,181 +105,314 @@ class flowerArea(Enum):
     network = 20
     sort = 21
     scending = 22
- 
 class SquarePos(Enum):
     top_left = 1
     top_right = 2
     bottom_right = 3
     bottom_left = 4
+class landKind(Enum):
+    soil = 1
+    stone = 2
+    sand = 3
+    lava = 4
+    water = 5
+    ice = 6
+
+class openCloseConsole(Enum):
+    open = 1
+    close = 2
 
 
 def main():
-    #
-    print("move mouse to area you want to use (no scrolling yet)")
-    print("press esc when done")
-    startUp()
-    print("press s on water")
-    setupWaterPosition()
-    print("countdown started")
     countdownTimer()
+    #water doesnt bring any menus up on good or bad clicks
+    hudClick(hudArea.water)
+    openCloseInspectConsole(openCloseConsole.open)
 
-    baseSquare.realSquare = True
-    createDefaultSquare(baseSquare)
+    while True:
+        if win32api.GetKeyState(0x01) < 0:
+            sleep(0.3)
+            landXPos, landYPos, landType = getIngamePos_and_landType()
+            print(landXPos, landYPos, landType)
+            
+        if win32api.GetKeyState(0X02) < 0:
+            openCloseInspectConsole(openCloseConsole.close)
+            break
 
-    squareList.append(baseSquare)
-
-    pyautogui.moveTo(squareList[0].topPoint[0], squareList[0].leftPoint[1], 2)
-    #squareList.append(newSqaure),
-    createSquarePlan()
-
-    #harvest everything for consistancy at the start
-    #for i in range(len(squareList)):
-    #    if i == 0: continue
-    #    harvestQueue.append(squareList[i])
-
-
-    checkForHarvests(600)
-
-    # if esc key is pressed
-    if win32api.GetKeyState(0x1B) < 0:
-        print("stopping operations")
-        sys.exit()
-
+#
+    #print("press s to set water refill position")
+    #setupWaterPosition()
+#
+    #print("press s to set default square position")
+    #createDefaultSquare(baseSquare)
+    #baseSquare.realSquare = True
+    #squareList.append(baseSquare)
+#
+    #createSquarePlan()
+#
+    #checkForHarvests(600)
 
 
 def hudClick(hudCommand, time=0.2):
-    #bag    = w 120 h 970
+    global consoleActive
     if hudCommand == hudArea.bag:
         moveClick(120, 970, time)
-    #select = w 620 h 970
-    elif hudCommand == hudArea.select:
-        moveClick(620, 970, time)
-    #shovel = w 720 h 970
-    elif hudCommand == hudArea.shovel:
-        moveClick(720, 970, time)
-    #plant  = w 810 h 970
-    elif hudCommand == hudArea.plant:
-        moveClick(810, 970, time)
-    #water  = w 910 h 970
-    elif hudCommand == hudArea.water:
-        moveClick(910, 970, time)
-    #cut    = w 990 h 970
-    elif hudCommand == hudArea.scissor:
-        moveClick(990, 970, time)
+    if consoleActive == False:
+        if hudCommand == hudArea.select:
+            moveClick(620, 970, time)
+        elif hudCommand == hudArea.shovel:
+            moveClick(720, 970, time)
+        elif hudCommand == hudArea.plant:
+            moveClick(810, 970, time)
+        elif hudCommand == hudArea.water:
+            moveClick(910, 970, time)
+        elif hudCommand == hudArea.scissor:
+            moveClick(990, 970, time)
+    elif consoleActive == True:
+        if hudCommand == hudArea.select:
+            moveClick(340, 970, time)
+        elif hudCommand == hudArea.shovel:
+            moveClick(440, 970, time)
+        elif hudCommand == hudArea.plant:
+            moveClick(530, 970, time)
+        elif hudCommand == hudArea.water:
+            moveClick(630, 970, time)
+        elif hudCommand == hudArea.scissor:
+            moveClick(730, 970, time)
 
 def hudCommands(hudOrder, square=None, flower=None, time =0.2):
-    if hudOrder == hudAction.selectLand:
-        hudClick(hudArea.select)
-        moveClickSquare(square, time)
-    if hudOrder == hudAction.tillLand:
-        hudClick(hudArea.shovel)
-        moveClickSquare(square, time)
+    global consoleActive
+    if consoleActive == False:
+        if hudOrder == hudAction.selectLand:
+            hudClick(hudArea.select)
+            moveClickSquare(square, time)
+        if hudOrder == hudAction.tillLand:
+            hudClick(hudArea.shovel)
+            moveClickSquare(square, time)
+        if hudOrder == hudAction.plantFlower:
+            hudClick(hudArea.plant)
+            moveClickSquare(square)
+            plantingMenuClick(flower,time)
+            moveClickSquare(square)
+        if hudOrder == hudAction.waterLand:
+            hudClick(hudArea.water)
+            moveClickSquare(square, time)
+        if hudOrder == hudAction.cutPlant:
+            hudClick(hudArea.scissor)
+            moveClickSquare(square, time)
+    elif consoleActive == True:
+        if hudOrder == hudAction.selectLand:
+            hudClick(hudArea.select, True)
+            moveClickSquare(square, time)
 
-    if hudOrder == hudAction.plantFlower:
-        hudClick(hudArea.plant)
-        moveClickSquare(square)
-        plantingMenuClick(flower,time)
+        if hudOrder == hudAction.tillLand:
+            hudClick(hudArea.shovel, True)
+            moveClickSquare(square, time)
+            
+        if hudOrder == hudAction.plantFlower:
+            hudClick(hudArea.plant, True)
+            moveClickSquare(square)
+            plantingMenuClick(flower,time)
+            moveClickSquare(square)
 
-        moveClickSquare(square)
-    if hudOrder == hudAction.waterLand:
-        hudClick(hudArea.water)
-        moveClickSquare(square, time)
-    if hudOrder == hudAction.cutPlant:
-        hudClick(hudArea.scissor)
-        moveClickSquare(square, time)
+        if hudOrder == hudAction.waterLand:
+            hudClick(hudArea.water, True)
+            moveClickSquare(square, time)
 
+        if hudOrder == hudAction.cutPlant:
+            hudClick(hudArea.scissor, True)
+            moveClickSquare(square, time)
 
 def bagClick(bagCommand, time=0.2):
-    if bagCommand == bagArea.map:
-        moveClick(725, 317, time)
-    if bagCommand == bagArea.inventory:
-        moveClick(935, 316, time)
-    if bagCommand == bagArea.flowers:
-        moveClick(1148, 318, time)
-    if bagCommand == bagArea.exit:
-        moveClick(1277, 319, time)
+    global consoleActive
+    if consoleActive == False:
+        if bagCommand == bagArea.map:
+            moveClick(725, 317, time)
+        if bagCommand == bagArea.inventory:
+            moveClick(935, 316, time)
+        if bagCommand == bagArea.flowers:
+            moveClick(1148, 318, time)
+        if bagCommand == bagArea.exit:
+            moveClick(1277, 319, time)
+    elif consoleActive == True:
+        if bagCommand == bagArea.map:
+            moveClick(444, 317, time)
+        if bagCommand == bagArea.inventory:
+            moveClick(658, 316, time)
+        if bagCommand == bagArea.flowers:
+            moveClick(858, 318, time)
+        if bagCommand == bagArea.exit:
+            moveClick(1000, 319, time)
+
 
 def flowerMenuClick(flowerCommand, time=0.2):
-    if flowerCommand == flowerArea.tile1:
-        moveClick(720, 420, time)
-    if flowerCommand == flowerArea.tile2:
-        moveClick(920, 420, time)
-    if flowerCommand == flowerArea.tile3:
-        moveClick(1220, 420, time)
+    global consoleActive
+    if consoleActive == False:
+        if flowerCommand == flowerArea.tile1:
+            moveClick(720, 420, time)
+        if flowerCommand == flowerArea.tile2:
+            moveClick(920, 420, time)
+        if flowerCommand == flowerArea.tile3:
+            moveClick(1220, 420, time)
 
-    if flowerCommand == flowerArea.tile4:
-        moveClick(720, 520, time)
-    if flowerCommand == flowerArea.tile5:
-        moveClick(920, 520, time)
-    if flowerCommand == flowerArea.tile6:
-        moveClick(1220, 520, time)
+        if flowerCommand == flowerArea.tile4:
+            moveClick(720, 520, time)
+        if flowerCommand == flowerArea.tile5:
+            moveClick(920, 520, time)
+        if flowerCommand == flowerArea.tile6:
+            moveClick(1220, 520, time)
 
-    if flowerCommand == flowerArea.tile7:
-        moveClick(720, 620, time)
-    if flowerCommand == flowerArea.tile8:
-        moveClick(920, 620, time)
-    if flowerCommand == flowerArea.tile9:
-        moveClick(1220, 620, time)
+        if flowerCommand == flowerArea.tile7:
+            moveClick(720, 620, time)
+        if flowerCommand == flowerArea.tile8:
+            moveClick(920, 620, time)
+        if flowerCommand == flowerArea.tile9:
+            moveClick(1220, 620, time)
 
-    if flowerCommand == flowerArea.tile10:
-        moveClick(720, 720, time)
-    if flowerCommand == flowerArea.tile11:
-        moveClick(920, 720, time)
-    if flowerCommand == flowerArea.tile12:
-        moveClick(1220, 720, time)
+        if flowerCommand == flowerArea.tile10:
+            moveClick(720, 720, time)
+        if flowerCommand == flowerArea.tile11:
+            moveClick(920, 720, time)
+        if flowerCommand == flowerArea.tile12:
+            moveClick(1220, 720, time)
 
-    if flowerCommand == flowerArea.skipToStart:
-        moveClick(635, 787, time)
-    if flowerCommand == flowerArea.skipForward:
-        moveClick(1260, 787, time)
-    if flowerCommand == flowerArea.skipBackward:
-        moveClick(653, 787, time)
-    if flowerCommand == flowerArea.skipToEnd:
-        moveClick(1288, 787, time)
+        if flowerCommand == flowerArea.skipToStart:
+            moveClick(635, 787, time)
+        if flowerCommand == flowerArea.skipForward:
+            moveClick(1260, 787, time)
+        if flowerCommand == flowerArea.skipBackward:
+            moveClick(653, 787, time)
+        if flowerCommand == flowerArea.skipToEnd:
+            moveClick(1288, 787, time)
 
-    if flowerCommand == flowerArea.rarity:
-        moveClick(660, 360, time)
-    if flowerCommand == flowerArea.land:
-        moveClick(760, 360, time)
-    if flowerCommand == flowerArea.planted:
-        moveClick(860, 360, time)
-    if flowerCommand == flowerArea.network:
-        moveClick(960, 360, time)
-    if flowerCommand == flowerArea.sort:
-        moveClick(1130, 360, time)
-    if flowerCommand == flowerArea.scending:
-        moveClick(1230, 360, time)
+        if flowerCommand == flowerArea.rarity:
+            moveClick(660, 360, time)
+        if flowerCommand == flowerArea.land:
+            moveClick(760, 360, time)
+        if flowerCommand == flowerArea.planted:
+            moveClick(860, 360, time)
+        if flowerCommand == flowerArea.network:
+            moveClick(960, 360, time)
+        if flowerCommand == flowerArea.sort:
+            moveClick(1130, 360, time)
+        if flowerCommand == flowerArea.scending:
+            moveClick(1230, 360, time)
+    elif consoleActive == True:
+        if flowerCommand == flowerArea.tile1:
+            moveClick(420, 420, time)
+        if flowerCommand == flowerArea.tile2:
+            moveClick(680, 420, time)
+        if flowerCommand == flowerArea.tile3:
+            moveClick(920, 420, time)
+
+        if flowerCommand == flowerArea.tile4:
+            moveClick(420, 520, time)
+        if flowerCommand == flowerArea.tile5:
+            moveClick(680, 520, time)
+        if flowerCommand == flowerArea.tile6:
+            moveClick(920, 520, time)
+
+        if flowerCommand == flowerArea.tile7:
+            moveClick(420, 620, time)
+        if flowerCommand == flowerArea.tile8:
+            moveClick(680, 620, time)
+        if flowerCommand == flowerArea.tile9:
+            moveClick(920, 620, time)
+
+        if flowerCommand == flowerArea.tile10:
+            moveClick(420, 720, time)
+        if flowerCommand == flowerArea.tile11:
+            moveClick(680, 720, time)
+        if flowerCommand == flowerArea.tile12:
+            moveClick(920, 720, time)
+
+        if flowerCommand == flowerArea.skipToStart:
+            moveClick(352, 787, time)
+        if flowerCommand == flowerArea.skipForward:
+            moveClick(985, 787, time)
+        if flowerCommand == flowerArea.skipBackward:
+            moveClick(376, 787, time)
+        if flowerCommand == flowerArea.skipToEnd:
+            moveClick(1010, 787, time)
+
+        if flowerCommand == flowerArea.rarity:
+            moveClick(394, 360, time)
+        if flowerCommand == flowerArea.land:
+            moveClick(500, 360, time)
+        if flowerCommand == flowerArea.planted:
+            moveClick(574, 360, time)
+        if flowerCommand == flowerArea.network:
+            moveClick(680, 360, time)
+        if flowerCommand == flowerArea.sort:
+            moveClick(866, 360, time)
+        if flowerCommand == flowerArea.scending:
+            moveClick(938, 360, time)
 
 def plantingMenuClick(plantingCommand, time = 0.2):
-    if plantingCommand == flowerArea.tile1:
-        moveClick(690, 470, time)
-    if plantingCommand == flowerArea.tile2:
-        moveClick(880, 470, time)
-    if plantingCommand == flowerArea.tile3:
-        moveClick(1049, 470, time)
-    if plantingCommand == flowerArea.tile4:
-        moveClick(1195, 470, time)
+    global consoleActive
+    if consoleActive == False:
+        if plantingCommand == flowerArea.tile1:
+            moveClick(690, 470, time)
+        if plantingCommand == flowerArea.tile2:
+            moveClick(880, 470, time)
+        if plantingCommand == flowerArea.tile3:
+            moveClick(1049, 470, time)
+        if plantingCommand == flowerArea.tile4:
+            moveClick(1195, 470, time)
 
-    if plantingCommand == flowerArea.tile5:
-        moveClick(690, 562, time)
-    if plantingCommand == flowerArea.tile6:
-        moveClick(880, 562, time)
-    if plantingCommand == flowerArea.tile7:
-        moveClick(1049, 562, time)
-    if plantingCommand == flowerArea.tile8:
-        moveClick(1195, 562, time)
+        if plantingCommand == flowerArea.tile5:
+            moveClick(690, 562, time)
+        if plantingCommand == flowerArea.tile6:
+            moveClick(880, 562, time)
+        if plantingCommand == flowerArea.tile7:
+            moveClick(1049, 562, time)
+        if plantingCommand == flowerArea.tile8:
+            moveClick(1195, 562, time)
 
-    if plantingCommand == flowerArea.tile9:
-        moveClick(690, 640, time)
-    if plantingCommand == flowerArea.tile10:
-        moveClick(880, 640, time)
-    if plantingCommand == flowerArea.tile11:
-        moveClick(1049, 640, time)
-    if plantingCommand == flowerArea.tile12:
-        moveClick(1195, 640, time)
+        if plantingCommand == flowerArea.tile9:
+            moveClick(690, 640, time)
+        if plantingCommand == flowerArea.tile10:
+            moveClick(880, 640, time)
+        if plantingCommand == flowerArea.tile11:
+            moveClick(1049, 640, time)
+        if plantingCommand == flowerArea.tile12:
+            moveClick(1195, 640, time)
 
-    if plantingCommand == bagArea.exit:
-        moveClick(1316,333, time)
+        if plantingCommand == bagArea.exit:
+            moveClick(1316,333, time)
+    if consoleActive == True:
+        if plantingCommand == flowerArea.tile1:
+            moveClick(395, 470, time)
+        if plantingCommand == flowerArea.tile2:
+            moveClick(585, 470, time)
+        if plantingCommand == flowerArea.tile3:
+            moveClick(763, 470, time)
+        if plantingCommand == flowerArea.tile4:
+            moveClick(930, 470, time)
+
+        if plantingCommand == flowerArea.tile5:
+            moveClick(395, 562, time)
+        if plantingCommand == flowerArea.tile6:
+            moveClick(585, 562, time)
+        if plantingCommand == flowerArea.tile7:
+            moveClick(763, 562, time)
+        if plantingCommand == flowerArea.tile8:
+            moveClick(930, 562, time)
+
+        if plantingCommand == flowerArea.tile9:
+            moveClick(690, 640, time)
+        if plantingCommand == flowerArea.tile10:
+            moveClick(585, 640, time)
+        if plantingCommand == flowerArea.tile11:
+            moveClick(763, 640, time)
+        if plantingCommand == flowerArea.tile12:
+            moveClick(930, 640, time)
+
+        if plantingCommand == bagArea.exit:
+            moveClick(1044,305, time)   
+
+    
+
 def startUp():
     #refresh page
     pyautogui.keyDown("ctrl")
@@ -284,6 +424,71 @@ def startUp():
     recordingRefresh()
 
     #playbackRefresh("refresh_positioning.json")
+
+def openCloseInspectConsole(interaction):
+    print("called")
+    if interaction == openCloseConsole.open:
+        pyautogui.keyDown("ctrl")
+        pyautogui.keyDown("shift")
+        pyautogui.press("j")
+        pyautogui.keyUp("ctrl")
+        pyautogui.keyUp("shift")
+        consoleActive = True
+    elif interaction == openCloseConsole.close:
+        if pyautogui.position()[0] > 100:
+            moveClick(pyautogui.position()[0] - 100,pyautogui.position()[1])
+        else:
+            moveClick(pyautogui.position()[0] + 300,pyautogui.position()[1])
+        pyautogui.keyDown("ctrl")
+        pyautogui.keyDown("shift")
+        pyautogui.press("j")
+        pyautogui.keyUp("ctrl")
+        pyautogui.keyUp("shift")
+        consoleActive = False
+
+def getIngamePos_and_landType():
+    x = 0
+    y = 0
+    landString = None
+    landEnum = None
+    #print("Taking a screenshot...")
+    screenshot = pyautogui.screenshot(region=(1365, 120, 555, 900))
+
+    #converting pyautogui screenshot into one that cv2 can read
+    open_cv_image = np.array(screenshot) 
+     #Convert RGB to BGR 
+    open_cv_image = open_cv_image[:, :, ::-1].copy()
+
+    words_in_image = pytesseract.image_to_string(open_cv_image)
+    word_list = words_in_image.split()
+
+    for i in range (len(word_list)):
+        if word_list[i] == "Tile":
+            x = word_list[i+1]
+            x.replace('(', '')
+            x.replace(' ', '')
+
+            y = word_list[i+2]
+            y.replace(' ', '')
+            y.replace(')', '')
+
+            landString = word_list[i+4] 
+        
+        if landString == "soil":
+            landEnum = landKind.soil
+        elif landString == "stone":
+            landEnum = landKind.stone
+        elif landString == "sand":
+            landEnum = landKind.sand
+        elif landString == "lava":
+            landEnum = landKind.lava
+        elif landString == "water":
+            landEnum = landKind.water
+        elif landString == "ice":
+            landEnum = landKind.ice
+
+   # print(landXPos, landYPos, landType) 
+    return x, y, landEnum    
 
 def recordingRefresh():
     recorder.runListeners()
@@ -403,7 +608,11 @@ def convertKey(button):
         return PYNPUT_SPECIAL_CASE_MAP[cleaned_key]
 
     return cleaned_key
-
+def getIngamePosition():
+    #take screenshot
+    #analyse useful area for last click position text
+    #return that position
+    pass
 def setupWaterPosition():
     print("Set position of water refill")
     while (True):
@@ -841,6 +1050,11 @@ def drawDiamonds(canvas):
     drawAllDiamonds(blank)
     cv.imshow('1 sqaure', blank)
 def createDefaultSquare(square):
+
+    while (True):
+        #when the s key is pressed run the rest of code
+        if win32api.GetKeyState(0x53) < 0:
+            break
     currentLeftSide = [0,0]
     currentTopSide = [0,0]
     currentRightSide = [0,0]
