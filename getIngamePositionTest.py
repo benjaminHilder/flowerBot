@@ -38,25 +38,28 @@ def getIngamePos_and_landType():
     grayscale = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
     adaptive = cv2.adaptiveThreshold(grayscale, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 11)
 
-    words_in_image = pytesseract.image_to_string(open_cv_image)
-    word_list = words_in_image.split()
+    #words_in_image = pytesseract.image_to_string(open_cv_image)
 
-    for i in range (len(word_list)):
-        if word_list[i] == "Tile":
-            xPos = word_list[i+1]
-            xPos.replace('(', '')
-            xPos.replace(' ', '')
-
-            yPos = word_list[i+2]
-            yPos.replace(' ', '')
-            yPos.replace(')', '')
-
-            landType = word_list[i+4]
-
+    cv2.imshow("show", open_cv_image)
+    cv2.waitKey(0)
+    #word_list = words_in_image.split()
+#
+    #for i in range (len(word_list)):
+    #    if word_list[i] == "Tile":
+    #        xPos = word_list[i+1]
+    #        xPos.replace('(', '')
+    #        xPos.replace(' ', '')
+#
+    #        yPos = word_list[i+2]
+    #        yPos.replace(' ', '')
+    #        yPos.replace(')', '')
+#
+    #        landType = word_list[i+4]
+#
             
 
-    return xPos, yPos, landType
+    #return xPos, yPos, landType
    # print(xPos, yPos, landType)
 
-#getIngamePos_and_landType()
+getIngamePos_and_landType()
 

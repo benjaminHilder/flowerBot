@@ -486,7 +486,7 @@ def getIngamePos_and_landType():
     landString = None
     landEnum = None
     #print("Taking a screenshot...")
-    screenshot = pyautogui.screenshot(region=(1365, 120, 555, 900))
+    screenshot = pyautogui.screenshot(region=(1450, 120, 470, 900))
 
     #converting pyautogui screenshot into one that cv2 can read
     open_cv_image = np.array(screenshot) 
@@ -921,11 +921,11 @@ def createDefaultSquare():
     newDefaultSquare = Square()
 
     calculateOutgameDefaultSquarePos(newDefaultSquare)
-
+    pyautogui.click()
     landXPos, landYPos, landType = getIngamePos_and_landType()
     newDefaultSquare.ingamePos = [landXPos, landYPos]
     newDefaultSquare.landType = landType
-
+    newDefaultSquare.centerPoint = SqCenterPoint(newDefaultSquare)
     squareList.append(newDefaultSquare)
 
     #print('left side: ', newDefaultSquare.leftPoint)
@@ -1211,17 +1211,21 @@ def createFarmingSquares():
             for i in range (len(squareList)):
                 if i == 0: continue
                 try:
+                    #print("Length: ", len(squareList))
                     isNextTo, squarePos = isMouseInNewSquarePos(pyautogui.position()[0], pyautogui.position()[1], squareList[i])
+
                 except:
                     pass
                 #if mouse position is outside of squares position
                 #detect what direction that is
                 if isNextTo:
+                    print("isNextTo")
                     if squarePos == squarePos.top_left:
                         #if centerpoint distance hasn't been created for this distance
                         #add square based on the default square
 
                         if topLeftCenterPointDistance == [0,0]:
+                            print("TLCD == 0,0")
                             newSquare = Square()
                             positionNextSquare(newSquare, squareList[i], squarePos.top_left)
                             newSquare.centerPoint = SqCenterPoint(newSquare)
@@ -1234,34 +1238,59 @@ def createFarmingSquares():
                             newSquare.landType = land
                             
                             squareList.append(newSquare)
-
-                            topLeftCenterPointDistance[0] = squareList[i].ingamePos[0] - newSquare.ingamePos[0]
-                            topLeftCenterPointDistance[1] = squareList[i].ingamePos[1] - newSquare.ingamePos[1]
-                            print("success")
-
                             
+                            print("squareList i centerpoint", squareList[i].centerPoint)
+                            print("newSquare centerpoint", newSquare.centerPoint)
+
+                            topLeftCenterPointDistance[0] = squareList[i].centerPoint[0] - newSquare.centerPoint[0]
+                            topLeftCenterPointDistance[1] = squareList[i].centerPoint[1] - newSquare.centerPoint[1]
+                            print("old square top point: ", squareList[i].topPoint)
+                            print("new square top point: ", newSquare.topPoint)
+                            print ("topLeftCenterPointDistance: ", topLeftCenterPointDistance)
+                            print("success")
                             
                         elif topLeftCenterPointDistance != [0,0]:
+                            print("TLCD != 0,0")
                             #confirm with in game pos if its correct
 
-
-                            potentialOutX = squareList[i].centerPoint[0] + topLeftCenterPointDistance[0]
-                            potentialOutY = squareList[i].centerPoint[1] + topLeftCenterPointDistance[1]
+                            potentialOutX = squareList[i].centerPoint[0] - topLeftCenterPointDistance[0]
+                            potentialOutY = squareList[i].centerPoint[1] - topLeftCenterPointDistance[1]
                             moveClick(potentialOutX, potentialOutY)
                             potentialInX, potentialInY, land = getIngamePos_and_landType()
 
+                            print("potentialInX: ", potentialInX)
+                            print("potentialInY: ", potentialInY)
+
+                            print('squareList[i].ingamePos[0]-1: ', squareList[i].ingamePos[0]-1)
+                            print('squareList[i].ingamePos[1]-1: ', squareList[i].ingamePos[1]-1)
+
+
                             #if so 
                             # add it to the list
-                            if potentialInX == squareList[i].ingamePos[0]-1 and potentialInY == squareList[i].ingamePos[1]-1:
+                            if potentialInY == squareList[i].ingamePos[1]-1:
                                 print("found")
                                 newSquare = Square()
-                                newSquare.centerPoint = [potentialOutX, potentialOutY]
-                                newSquare.ingamePos = (potentialInX,potentialInY)
+                                positionNextSquare(newSquare, squareList[i], squarePos.top_left)
+
+                                print("squareList[i] top point: ", squareList[i].topPoint)
+                                print("newSquare ", newSquare.topPoint)
+
+                                #newSquare.centerPoint = [potentialOutX, potentialOutY]
+                                newSquare.centerPoint = SqCenterPoint(newSquare)
+                                moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
+                                ingameX, ingameY, land = getIngamePos_and_landType()
+                                
+
+                                newSquare.ingamePos = [ingameX, ingameY]
+                                #newSquare.landType = land
+                                
+
+                                squareList.append(newSquare)
                             #if not
                             # move the cursor in a position that would be correct
                             #for example if we are too much to the left side, check right side
                             #keep checking until we find desired ingame pos
-                            elif potentialInX != squareList[i].ingamePos[0]-1 or potentialInY != squareList[i].ingamePos[1]-1:
+                            elif potentialInY != squareList[i].ingamePos[1]-1:
                                 expectedIngamePos = [squareList[1].ingamePos[0] + topLeftCenterPointDistance[0],squareList[1].ingamePos[1] + topLeftCenterPointDistance[1]]
                                 print ("Incorrect ingamepos")
                                 pass
@@ -1300,7 +1329,7 @@ def isMouseInNewSquarePos(x, y, oldSquare):
     #print (y)
     if x > oldSquare.topPoint[0] and y < oldSquare.rightPoint[1]:
         squarePosition = SquarePos.top_right
-        positionNextSquareEnd(testSquare, squarePosition)
+        positionNextSquare(testSquare, oldSquare, squarePosition)
 
         point = Point(x,y)
         shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
@@ -1311,7 +1340,8 @@ def isMouseInNewSquarePos(x, y, oldSquare):
 #top left
     if x < oldSquare.topPoint[0] and y < oldSquare.rightPoint[1]:
         squarePosition = SquarePos.top_left
-        positionNextSquareEnd(testSquare, squarePosition)
+        
+        positionNextSquare(testSquare, oldSquare, squarePosition)
 
         point = Point(x,y)
         shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
@@ -1323,7 +1353,7 @@ def isMouseInNewSquarePos(x, y, oldSquare):
     #bottom right
     if x > oldSquare.topPoint[0] and y > oldSquare.rightPoint[1]:
         squarePosition = SquarePos.bottom_right
-        positionNextSquareEnd(testSquare, squarePosition)
+        positionNextSquare(testSquare, oldSquare, squarePosition)
 
         point = Point(x,y)
         shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
@@ -1335,7 +1365,7 @@ def isMouseInNewSquarePos(x, y, oldSquare):
     #bottom left
     if x < oldSquare.topPoint[0] and y > oldSquare.rightPoint[1]:
         squarePosition = SquarePos.bottom_left
-        positionNextSquareEnd(testSquare, squarePosition)
+        positionNextSquare(testSquare, oldSquare, squarePosition)
 
         point = Point(x,y)
         shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
@@ -2119,9 +2149,6 @@ def positionNextSquare(square, prevSquare, posDir, baseSquare = None):
     #pyautogui.moveTo(square.rightPoint[0], square.rightPoint[1], 5)
 
 def positionNextSquareEnd(square, posDir, baseSquare = None):
-
-    
-    
     previousPos = squareList[1]
     #print ("length", len(squareList))
     #print("prev left", previousPos.leftPoint)
