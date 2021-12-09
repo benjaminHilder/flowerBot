@@ -55,7 +55,7 @@ def getIngamePos_and_landType():
 
             
 
-    #return xPos, yPos, landType
+    return xPos, yPos, landType
    # print(xPos, yPos, landType)
 
 #getIngamePos_and_landType()

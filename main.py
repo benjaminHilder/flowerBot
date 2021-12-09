@@ -63,6 +63,11 @@ blank = np.zeros((1080,1920,3), dtype='uint8')
 
 consoleActive = False
 
+topLeftCenterPointDistance = [0,0]
+topRightCenterPointDistance = [0,0]
+bottomLeftCenterPointDistance = [0,0]
+bottomRightCenterPointDistance = [0,0]
+
 #wincap = WindowCapture()
 class hudArea(Enum):
     bag    = 1
@@ -128,20 +133,23 @@ def main():
     #water doesnt bring any menus up on good or bad clicks
     hudClick(hudArea.water)
     openCloseInspectConsole(openCloseConsole.open)
-
-    while True:
-        if win32api.GetKeyState(0x01) < 0:
-            sleep(0.3)
-            landXPos, landYPos, landType = getIngamePos_and_landType()
-            print(landXPos, landYPos, landType)
-            
-        if win32api.GetKeyState(0X02) < 0:
-            openCloseInspectConsole(openCloseConsole.close)
-            break
+    #to prevent typing in console
+    hudClick(hudArea.water)
+    setUp()
+    print("to call create farming squares")
+    createFarmingSquares()
+    #while True:
+    #    if win32api.GetKeyState(0x01) < 0:
+    #        #sleep(0.3)
+    #        #landXPos, landYPos, landType = getIngamePos_and_landType()
+    #        #print(landXPos, landYPos, landType)
+    #        #pass
+    #    if win32api.GetKeyState(0X02) < 0:
+    #        openCloseInspectConsole(openCloseConsole.close)
+    #        break
 
 #
-    #print("press s to set water refill position")
-    #setupWaterPosition()
+
 #
     #print("press s to set default square position")
     #createDefaultSquare(baseSquare)
@@ -410,9 +418,31 @@ def plantingMenuClick(plantingCommand, time = 0.2):
 
         if plantingCommand == bagArea.exit:
             moveClick(1044,305, time)   
+def setUp():
 
-    
+    moveClick(1541, 109, 0.3)
+    pyautogui.write('[board click]')
+    hudClick(hudArea.water)
+    #0x53 == S key
+    print("setting up water position...")
+    print("press s key on the position of refill water")
 
+    while True:
+        if win32api.GetKeyState(0x53) < 0:
+            setupWaterPosition()
+            break
+    print("setting up default square...")
+    print("find a square you own that has a yellow boarder (typically Smoldering Ground)")
+    print("where its corners aren't obstructed from view")
+    print(" ")
+    print("press s key on this area")
+
+    while True:
+        if win32api.GetKeyState(0x53) < 0:
+
+            createDefaultSquare()
+            #positionToPurpleTop(squareList[1],pyautogui.position()[0], pyautogui.position()[1], squareList[1].height, squareList[1].width, squareList[1].topDiff)
+            break
 def startUp():
     #refresh page
     pyautogui.keyDown("ctrl")
@@ -449,6 +479,10 @@ def openCloseInspectConsole(interaction):
 def getIngamePos_and_landType():
     x = 0
     y = 0
+
+    xInt = 0
+    yInt = 0
+
     landString = None
     landEnum = None
     #print("Taking a screenshot...")
@@ -463,32 +497,46 @@ def getIngamePos_and_landType():
     word_list = words_in_image.split()
 
     for i in range (len(word_list)):
+
         if word_list[i] == "Tile":
             x = word_list[i+1]
-            x.replace('(', '')
-            x.replace(' ', '')
+            #print("raw x ", x)
+            xClean1 =x.replace('(', '')
+            xClean2 = xClean1.replace(' ', '')
+            xClean3 = xClean2.replace('©', '')
+            xFullyClean = xClean3.replace(',', '')
+
+            xInt = int(xFullyClean)
+            #print("cleaned x ", xClean3)
 
             y = word_list[i+2]
-            y.replace(' ', '')
-            y.replace(')', '')
+            #print("raw y ", y)
+            yClean1 = y.replace(' ', '')
+            yClean2 = yClean1.replace('©', '')
+            yFullyClean = yClean2.replace(')', '')
 
-            landString = word_list[i+4] 
-        
-        if landString == "soil":
-            landEnum = landKind.soil
-        elif landString == "stone":
-            landEnum = landKind.stone
-        elif landString == "sand":
-            landEnum = landKind.sand
-        elif landString == "lava":
-            landEnum = landKind.lava
-        elif landString == "water":
-            landEnum = landKind.water
-        elif landString == "ice":
-            landEnum = landKind.ice
+            yInt = int(yFullyClean)
+            #print("cleaned y ",yClean2)
 
-   # print(landXPos, landYPos, landType) 
-    return x, y, landEnum    
+            try:
+                landString = word_list[i+4] 
+            except:
+                pass
+        if landString != None:
+            if landString == "soil":
+                landEnum = landKind.soil
+            elif landString == "stone":
+                landEnum = landKind.stone
+            elif landString == "sand":
+                landEnum = landKind.sand
+            elif landString == "lava":
+                landEnum = landKind.lava
+            elif landString == "water":
+                landEnum = landKind.water
+            elif landString == "ice":
+                landEnum = landKind.ice
+    
+    return xInt, yInt, landEnum    
 
 def recordingRefresh():
     recorder.runListeners()
@@ -614,26 +662,33 @@ def getIngamePosition():
     #return that position
     pass
 def setupWaterPosition():
-    print("Set position of water refill")
-    while (True):
-        #if the s key pressed
+    pyautogui.click()
+    waterSquare = Square
+    waterSquare.waterRefillPos = [pyautogui.position()[0],pyautogui.position()[1]]
 
-        if win32api.GetKeyState(0x53) < 0:
-            waterPos[0] = pyautogui.position()[0]
-            waterPos[1] = pyautogui.position()[1]
-
-            break
+    ingameX, ingameY, land = getIngamePos_and_landType()
+    waterSquare.ingamePos = [ingameX, ingameY]
+    waterSquare.landType = land
+    waterSquare.isWaterRefill = True
+    squareList.append(waterSquare)
 
     refillWater()
+
+    
 def minusWaterCount(num):
     waterCount -num
+
 def resetWaterCount():
     waterCount = 10
+
 def getWaterCount():
     return waterCount
+
 def refillWater(time = 0.5):
-    moveClick(waterPos[0], waterPos[1], time)
-    resetWaterCount()
+    for square in squareList:
+        if square.isWaterRefill == True:
+            moveClick(square.waterRefillPos[0], square.waterRefillPos[1], time)
+            resetWaterCount()
 
 def checkFirstSquarePos():
     pyautogui.moveTo(squareList[0].centerPoint)
@@ -819,37 +874,6 @@ def plantFlower(square, tile = flowerArea.tile1):
             
             if moveToWater and haveWater:
                 break
-        
-
-        
-        
-
-
-    #removeLastPlantedFromQueue()
-
-
-#def searchSquaresForTime():
-
-    #print("searching harvest")
-    #for i in range(len(squareList)):
-    #    if i == 0: continue
-    #    try:
-    #        if squareList[i].harvestClock == 1:
-    #            print("harvesting ", i)
-    #            harvestFlower(squareList[i])
-    #            
-    #            squareList[i].harvestClock = squareList[i].harvestTime
-#
-    #            print("planting ", i)
-    #            plantFlower(squareList[i])
-#
-    #        else:
-    #            squareList[i].harvestClock -= 1
-    #            
-    #        print("squarelist ", i, " harvest clock is now at: ", squareList[i].harvestClock)
-    #    except:
-    #        pass
-    #return
 
 def checkForPixels(center, xFar, yFar, pixelRGB = (255, 255, 255)):
 
@@ -892,7 +916,439 @@ def SqCenterPoint(square):
 
     return centerPoint
 
-def createSquarePlan():
+def createDefaultSquare():
+    #must left click then call this function to work
+    newDefaultSquare = Square()
+
+    calculateOutgameDefaultSquarePos(newDefaultSquare)
+
+    landXPos, landYPos, landType = getIngamePos_and_landType()
+    newDefaultSquare.ingamePos = [landXPos, landYPos]
+    newDefaultSquare.landType = landType
+
+    squareList.append(newDefaultSquare)
+
+    #print('left side: ', newDefaultSquare.leftPoint)
+    #print('top side: ', newDefaultSquare.topPoint)
+    #print('right side: ', newDefaultSquare.rightPoint)
+    #print('bottom side: ', newDefaultSquare.bottomPoint)
+#
+    #print ('newDefaultSquare ingame pos: ', newDefaultSquare.ingamePos)
+    #print ('newDefaultSquare landType: ', newDefaultSquare.landType)
+
+           
+def calculateOutgameDefaultSquarePos(square):
+    currentLeftSide = [0,0]
+    currentTopSide = [0,0]
+    currentRightSide = [0,0]
+    currentBottomSide = [0,0]
+
+    innerLeftSide = [0,0]
+    innerTopSide = [0,0]
+    innerRightSide = [0,0]
+    innerBottomSide = [0,0]
+
+    currentOuterLeft = [0,0]
+    currentOuterTop = [0,0]
+    currentOuterRight = [0,0]
+    currentOuterBottom = [0,0]
+
+    finalLeftSide = [0,0]
+    finalTopSide = [0,0]
+    finalRightSide = [0,0]
+    finalBottomSide = [0,0]
+
+    boarderRGB = (255, 190, 68)
+
+    savedMousePositon = pyautogui.position()
+    pyautogui.mouseUp(button='left')
+    pyautogui.moveTo(543,1060)
+    screenshot = pyautogui.screenshot()
+
+    #from saved mouse pos search for right side
+
+    for i in range(9999):
+        if screenshot.getpixel((savedMousePositon[0] + i, savedMousePositon[1])) != boarderRGB:
+            currentRightSide = [savedMousePositon[0] + i, savedMousePositon[1]]
+            #pyautogui.moveTo(currentRightSide)
+        else:
+            break
+
+
+    above = [currentRightSide[0], currentRightSide[1]]
+    below = [currentRightSide[0], currentRightSide[1]]
+
+    #above
+    for i in range(9999):
+        if screenshot.getpixel((currentRightSide[0], currentRightSide[1]-i)) != boarderRGB:
+            above = [currentRightSide[0], currentRightSide[1]-i]
+            #pyautogui.moveTo(above)
+        else: 
+            break
+    #below        
+    for i in range(9999):
+        if screenshot.getpixel((currentRightSide[0], currentRightSide[1]+i)) != boarderRGB:
+            below = [currentRightSide[0], currentRightSide[1]+i]
+           # pyautogui.moveTo(below)
+        else: 
+            break
+
+    aboveCheck = currentRightSide[1] - above[1]
+    belowCheck =  below[1] - currentRightSide[1]
+
+
+    #if boarder is above, try 1 down 2 right
+    if aboveCheck < belowCheck:
+        for i in range(9999):
+            for k in range(9999):
+                
+                if screenshot.getpixel((currentRightSide[0]+1, currentRightSide[1])) == boarderRGB and screenshot.getpixel((currentRightSide[0],currentRightSide[1]+1 )) != boarderRGB:
+                    currentRightSide[1] += 1
+                    #pyautogui.moveTo(currentRightSide[0],currentRightSide[1], 0.001)
+                    #print(1)
+                else: 
+                    break
+            for j in range(9999):
+                if screenshot.getpixel((currentRightSide[0] + 1, currentRightSide[1])) != boarderRGB:
+                    currentRightSide[0] += 1
+                    #pyautogui.moveTo(currentRightSide[0],currentRightSide[1], 0.001)
+                    #print(2)
+                else:
+                    break
+
+    #put in parking spot
+        for j in range(9999):
+            if screenshot.getpixel((currentRightSide[0],currentRightSide[1]-1 )) !=boarderRGB:
+                currentRightSide[1]-=1
+
+                #pyautogui.moveTo(currentRightSide[0],currentRightSide[1], 0.001)
+            else:
+                break
+    innerRightSide = currentRightSide
+    #if boarder is below, try 1 up and 2 right 
+    if belowCheck < aboveCheck:
+        for i in range(9999):
+            for k in range(9999):
+                
+                if screenshot.getpixel((currentRightSide[0]+1, currentRightSide[1])) == boarderRGB and screenshot.getpixel((currentRightSide[0],currentRightSide[1]-1 )) != boarderRGB:
+                    currentRightSide[1] -= 1
+                    #pyautogui.moveTo(currentRightSide[0],currentRightSide[1], 0.001)
+                    #print(1)
+                else: 
+                    break
+            for j in range(9999):
+                if screenshot.getpixel((currentRightSide[0] + 1, currentRightSide[1])) != boarderRGB:
+                    currentRightSide[0] += 1
+                    #pyautogui.moveTo(currentRightSide[0],currentRightSide[1], 0.001)
+                    #print(2)
+                else:
+                    break
+    #put in parking spot
+        for j in range(9999):
+            if screenshot.getpixel((currentRightSide[0],currentRightSide[1]+1 )) !=boarderRGB:
+                currentRightSide[1]+=1
+                #pyautogui.moveTo(currentRightSide[0],currentRightSide[1], 0.001)
+            else:
+                break
+    innerRightSide = currentRightSide
+    #if boarder is under or above this is then this is the right side
+    #sorted with parking 
+
+    #once right side is complete
+    #from right side, travel backwards on the x to find left side
+    currentLeftSide = currentRightSide
+    for i in range(9999):
+        if screenshot.getpixel((currentLeftSide[0]-1, currentLeftSide[1])) != boarderRGB:
+            currentLeftSide = [currentLeftSide[0]-1, currentLeftSide[1]]
+            #pyautogui.moveTo(currentLeftSide[0], currentLeftSide[1], 0.001)
+        else:
+            break
+    #pyautogui.moveTo(currentLeftSide[0], currentLeftSide[1], 0.001)
+    #once you hit the boarder this is left side
+    innerLeftSide = currentLeftSide
+    #divide the distance between rightside x and leftside x by 2
+    distXRL = innerRightSide[0] - innerLeftSide[0]
+   # print("distXRL: ", distXRL)
+    divXRL = distXRL/2
+
+    #print("divXRL: ", math.floor(divXRL))
+    #pyautogui.moveTo(innerLeftSide[0] + divXRL, currentLeftSide[1], 0.001)
+
+    #from here travel the y up and down until you reach the boarder
+    #Top
+    currentTopSide = [innerLeftSide[0] + divXRL, currentLeftSide[1]]
+
+    for i in range(9999):
+        if screenshot.getpixel((currentTopSide[0],currentTopSide[1] -1)) != boarderRGB:
+            currentTopSide[1] -= 1
+            #pyautogui.moveTo(currentTopSide[0], currentTopSide[1], 0.001)
+        else:
+            break
+    #put in parking spot
+    #for j in range(9999):
+        #if screenshot.getpixel((currentTopSide[0]-1,currentTopSide[1])) !=boarderRGB:
+            #currentTopSide[0]-=1
+
+        #else:
+            #break
+    innerTopSide = currentTopSide
+    #pyautogui.moveTo(innerTopSide[0],innerTopSide[1], 0.001)
+
+    currentBottomSide = [innerLeftSide[0] + divXRL, currentLeftSide[1]]
+    #Bottom
+    for i in range(9999):
+        if screenshot.getpixel((currentBottomSide[0], currentBottomSide[1] + 1)) != boarderRGB:
+            currentBottomSide[1] += 1
+            #pyautogui.moveTo(currentBottomSide[0], currentBottomSide[1], 0.001)
+        else:
+            break
+    #put in parking spot
+    for j in range(9999):
+        if screenshot.getpixel((currentBottomSide[0]-1,currentBottomSide[1])) !=boarderRGB:
+            currentBottomSide[0]-=1
+            #pyautogui.moveTo(currentBottomSide[0], currentBottomSide[1], 0.001)
+        else:
+            break   
+    innerBottomSide = currentBottomSide
+    #print("innerLeft: ", innerLeftSide)
+    square.innerLeft = innerLeftSide
+    square.innerTop = innerTopSide
+    square.innerRight = innerRightSide
+    square.innerBottom = innerBottomSide
+    #pyautogui.moveTo(innerBottomSide[0],innerBottomSide[1], 0.001)
+    
+    #once reached these are the up and down pos of the sqaure
+    #check if there is any space next to the up and down positions
+
+    #for the boarders
+    #go from these positions and find all the pixels of the boarder 
+    # (for example, on the rightside check x+, leftside check x-)
+    currentOuterLeft = [innerLeftSide[0]-1, innerLeftSide[1]]
+    currentOuterTop = [innerTopSide[0], innerTopSide[1]-1]
+    currentOuterRight = [innerRightSide[0]+1, innerRightSide[1]]
+    currentOuterBottom = [innerBottomSide[0], innerBottomSide[1]+1]
+    #pyautogui.moveTo(currentOuterLeft[0], currentOuterLeft[1], 0.001)
+    #Left
+    for i in range(9999):
+        if screenshot.getpixel((currentOuterLeft[0]-1,currentOuterLeft[1])) == boarderRGB:
+            currentOuterLeft[0] -= 1
+            #pyautogui.moveTo(currentOuterLeft[0], currentOuterLeft[1], 0.001)
+        else:
+            break
+    
+    #Top
+    for i in range(9999):
+        if screenshot.getpixel((currentOuterTop[0],currentOuterTop[1]-1)) == boarderRGB:
+            currentOuterTop[1] -= 1
+            #pyautogui.moveTo(currentOuterTop[0], currentOuterTop[1], 2)
+            
+        else:
+            break
+    
+    #Right
+    for i in range(9999):
+        if screenshot.getpixel((currentOuterRight[0]+1,currentOuterRight[1])) == boarderRGB:
+            currentOuterRight[0] += 1
+            #pyautogui.moveTo(currentOuterRight[0], currentOuterRight[1], 0.001)
+        else:
+            break
+    
+    #Bottom
+    for i in range(9999):
+        if screenshot.getpixel((currentOuterBottom[0],currentOuterBottom[1]+1)) == boarderRGB:
+            currentOuterBottom[1] += 1
+            #pyautogui.moveTo(currentOuterBottom[0], currentOuterBottom[1], 0.001)
+        else:
+            break
+    #finalBottomSide = currentOuterBottom
+    #pyautogui.moveTo(currentOuterBottom[0],currentOuterBottom[1])
+    distLeft = innerLeftSide[0] - currentOuterLeft[0] 
+    distTop = innerTopSide[1] - currentOuterTop[1] 
+    distRight = currentOuterRight[0] - innerRightSide[0] 
+    distBottom = currentOuterBottom[1] - innerBottomSide[1] 
+
+    #print("distLeft: ", distLeft)
+    #print("distTop: ", distTop)
+    #print("distRight: ", distRight)
+    #print("distBottom: ", distBottom)
+    # divide by 2 and thats the boarder number
+    distLeft = distLeft/2
+    distTop = distTop/2
+    distRight = distRight/2
+    distBottom = distBottom/2
+
+    
+    #add this with the correct side and this is the total number, create a sqaure with this
+    finalLeftSide = [innerLeftSide[0] - distLeft, innerLeftSide[1]]
+    finalTopSide = [innerTopSide[0], innerTopSide[1] - distTop]
+    finalRightSide = [innerRightSide[0] + distRight, innerRightSide[1]]
+    finalBottomSide = [innerBottomSide[0], innerBottomSide[1] + distBottom]
+
+    #pyautogui.moveTo(finalTopSide)
+    #finalLeftSide[0] = round(finalLeftSide[0])
+    #finalTopSide[0] = round(finalTopSide[0])
+    #finalBottomSide[0] = round(finalBottomSide[0])
+
+    #pyautogui.moveTo(finalLeftSide[0], finalLeftSide[1], 5)
+    #pyautogui.moveTo(finalTopSide[0], finalTopSide[1], 5)
+    #pyautogui.moveTo(finalRightSide[0], finalRightSide[1], 5)
+    #pyautogui.moveTo(finalBottomSide[0], finalBottomSide[1], 5)
+    #pyautogui.moveTo(finalBottomSide[0], finalBottomSide[1], 0.001)
+
+    #print("finalRight before", finalRightSide)
+
+
+    #print("finalRight after", finalRightSide)
+    pyautogui.moveTo(savedMousePositon)
+    square.setPoints(finalLeftSide, finalTopSide, finalRightSide, finalBottomSide)
+
+def createFarmingSquares():
+    #while place key is down
+    while True:
+    #s key
+        if win32api.GetKeyState(0x53) < 0:
+
+            for i in range (len(squareList)):
+                if i == 0: continue
+                try:
+                    isNextTo, squarePos = isMouseInNewSquarePos(pyautogui.position()[0], pyautogui.position()[1], squareList[i])
+                except:
+                    pass
+                #if mouse position is outside of squares position
+                #detect what direction that is
+                if isNextTo:
+                    if squarePos == squarePos.top_left:
+                        #if centerpoint distance hasn't been created for this distance
+                        #add square based on the default square
+
+                        if topLeftCenterPointDistance == [0,0]:
+                            newSquare = Square()
+                            positionNextSquare(newSquare, squareList[i], squarePos.top_left)
+                            newSquare.centerPoint = SqCenterPoint(newSquare)
+
+
+                            moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
+                            ingameX, ingameY, land = getIngamePos_and_landType()
+
+                            newSquare.ingamePos = [ingameX, ingameY]
+                            newSquare.landType = land
+                            
+                            squareList.append(newSquare)
+
+                            topLeftCenterPointDistance[0] = squareList[i].ingamePos[0] - newSquare.ingamePos[0]
+                            topLeftCenterPointDistance[1] = squareList[i].ingamePos[1] - newSquare.ingamePos[1]
+                            print("success")
+
+                            
+                            
+                        elif topLeftCenterPointDistance != [0,0]:
+                            #confirm with in game pos if its correct
+
+
+                            potentialOutX = squareList[i].centerPoint[0] + topLeftCenterPointDistance[0]
+                            potentialOutY = squareList[i].centerPoint[1] + topLeftCenterPointDistance[1]
+                            moveClick(potentialOutX, potentialOutY)
+                            potentialInX, potentialInY, land = getIngamePos_and_landType()
+
+                            #if so 
+                            # add it to the list
+                            if potentialInX == squareList[i].ingamePos[0]-1 and potentialInY == squareList[i].ingamePos[1]-1:
+                                print("found")
+                                newSquare = Square()
+                                newSquare.centerPoint = [potentialOutX, potentialOutY]
+                                newSquare.ingamePos = (potentialInX,potentialInY)
+                            #if not
+                            # move the cursor in a position that would be correct
+                            #for example if we are too much to the left side, check right side
+                            #keep checking until we find desired ingame pos
+                            elif potentialInX != squareList[i].ingamePos[0]-1 or potentialInY != squareList[i].ingamePos[1]-1:
+                                expectedIngamePos = [squareList[1].ingamePos[0] + topLeftCenterPointDistance[0],squareList[1].ingamePos[1] + topLeftCenterPointDistance[1]]
+                                print ("Incorrect ingamepos")
+                                pass
+                            
+                            
+                        pass
+                    if squarePos == squarePos.top_right:
+                        pass
+                    if squarePos == squarePos.bottom_left:
+                        pass
+                    if squarePos == squarePos.bottom_right:
+                        pass
+
+                    
+
+        
+
+            #if centerpoint distance has been created for this distance
+                #add square based on centerpoint distance
+                #confirm with in game pos if its correct
+
+        #q key
+        if win32api.GetKeyState(0x51) < 0: 
+            print('finished setting up farming positions')
+            break  
+        #break
+             
+def isMouseInNewSquarePos(x, y, oldSquare):
+    testSquare = Square()
+    #print ("testSquare right point", testSquare.rightPoint)
+    #testSquare.realSquare = True
+    #squareList.append(testSquare)
+#top right
+    squarePosition = None
+    #print (x)
+    #print (y)
+    if x > oldSquare.topPoint[0] and y < oldSquare.rightPoint[1]:
+        squarePosition = SquarePos.top_right
+        positionNextSquareEnd(testSquare, squarePosition)
+
+        point = Point(x,y)
+        shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
+        if shapelySquare.contains(point):
+            #print(shapelySquare.contains(point), squarePosition) 
+           
+            return shapelySquare.contains(point), squarePosition
+#top left
+    if x < oldSquare.topPoint[0] and y < oldSquare.rightPoint[1]:
+        squarePosition = SquarePos.top_left
+        positionNextSquareEnd(testSquare, squarePosition)
+
+        point = Point(x,y)
+        shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
+        if shapelySquare.contains(point):
+            #print(shapelySquare.contains(point), squarePosition)
+            
+            return shapelySquare.contains(point), squarePosition
+        
+    #bottom right
+    if x > oldSquare.topPoint[0] and y > oldSquare.rightPoint[1]:
+        squarePosition = SquarePos.bottom_right
+        positionNextSquareEnd(testSquare, squarePosition)
+
+        point = Point(x,y)
+        shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
+        if shapelySquare.contains(point):      
+            #print(shapelySquare.contains(point), squarePosition) 
+            
+            return shapelySquare.contains(point), squarePosition
+        
+    #bottom left
+    if x < oldSquare.topPoint[0] and y > oldSquare.rightPoint[1]:
+        squarePosition = SquarePos.bottom_left
+        positionNextSquareEnd(testSquare, squarePosition)
+
+        point = Point(x,y)
+        shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
+        if shapelySquare.contains(point): 
+            #print(shapelySquare.contains(point), squarePosition)
+            
+            return shapelySquare.contains(point), squarePosition
+    else:
+        #print(False, squarePosition)
+        
+        return False, squarePosition
+
+def createSquarePlanOld():
     canPlace = True
     side = None
     isNextTo = None
@@ -995,7 +1451,7 @@ def isNextSquareNextToLast(x,y):
     #print(len(squareList))
     if x > squareList[-2].topPoint[0] and y < squareList[-2].rightPoint[1]:
         squarePosition = SquarePos.top_right
-        positionNextSquare(testSquare, squarePosition)
+        positionNextSquareEnd(testSquare, squarePosition)
 
         point = Point(x,y)
         shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
@@ -1008,7 +1464,7 @@ def isNextSquareNextToLast(x,y):
     #top left
     if x < squareList[-2].topPoint[0] and y < squareList[-2].rightPoint[1]:
         squarePosition = SquarePos.top_left
-        positionNextSquare(testSquare, squarePosition)
+        positionNextSquareEnd(testSquare, squarePosition)
 
         point = Point(x,y)
         shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
@@ -1020,7 +1476,7 @@ def isNextSquareNextToLast(x,y):
     #bottom right
     if x > squareList[-2].topPoint[0] and y > squareList[-2].rightPoint[1]:
         squarePosition = SquarePos.bottom_right
-        positionNextSquare(testSquare, squarePosition)
+        positionNextSquareEnd(testSquare, squarePosition)
 
         point = Point(x,y)
         shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
@@ -1032,7 +1488,7 @@ def isNextSquareNextToLast(x,y):
     #bottom left
     if x < squareList[-2].topPoint[0] and y > squareList[-2].rightPoint[1]:
         squarePosition = SquarePos.bottom_left
-        positionNextSquare(testSquare, squarePosition)
+        positionNextSquareEnd(testSquare, squarePosition)
 
         point = Point(x,y)
         shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
@@ -1049,7 +1505,7 @@ def isNextSquareNextToLast(x,y):
 def drawDiamonds(canvas):
     drawAllDiamonds(blank)
     cv.imshow('1 sqaure', blank)
-def createDefaultSquare(square):
+def createDefaultSquareOld(square):
 
     while (True):
         #when the s key is pressed run the rest of code
@@ -1091,10 +1547,7 @@ def createDefaultSquare(square):
             break
 
     #once at far right side
-    #pyautogui.moveTo(currentRightSide[0],currentRightSide[1] , 2)
-
-  
-        #check where the the colour is above and below
+    #check where the the colour is above and below
 
     above = [currentRightSide[0], currentRightSide[1]]
     below = [currentRightSide[0], currentRightSide[1]]
@@ -1171,7 +1624,7 @@ def createDefaultSquare(square):
                 break
     innerRightSide = currentRightSide
     #if boarder is under or above this is then this is the right side
-        #sorted with parking 
+    #sorted with parking 
 
     #once right side is complete
     #from right side, travel backwards on the x to find left side
@@ -1561,7 +2014,7 @@ def positionToPurpleTop(square, mouseX, mouseY, height, width, topDiff, howFast 
     halfHeight = height/2
     halfWidth = width/2
 
-    topBoarder = mouseY - topDiff
+    topBoarder = mouseY - topDiff[1]
     square.topPoint = [mouseX, topBoarder]
     pyautogui.moveTo(mouseX, topBoarder + halfHeight)
 
@@ -1572,11 +2025,105 @@ def positionToPurpleTop(square, mouseX, mouseY, height, width, topDiff, howFast 
     square.centerPoint = [mouseX, topBoarder + halfHeight]
 
     print("centerPoint is now ", square.centerPoint)
+    
+def positionNextSquare(square, prevSquare, posDir, baseSquare = None):
 
-def positionNextSquare(square, posDir, baseSquare = None):
+    if (posDir == SquarePos.top_left):
+        LTXdifference = prevSquare.leftPoint[0] - prevSquare.topPoint[0]
+        TLYdifference = prevSquare.topPoint[1] - prevSquare.leftPoint[1]
+
+        #setSquarePosFull(square, previousSquare, LTXdifference, TLYdifference)
+        square.rightPoint = prevSquare.topPoint
+        square.bottomPoint = prevSquare.leftPoint
+        
+        #topPoint
+        #LTXdifference = previousSquare.leftPoint[0] - previousSquare.topPoint[0]
+        #TLYdifference = previousSquare.topPoint[1] - previousSquare.leftPoint[1]
+
+
+        #x
+        square.topPoint[0] = prevSquare.topPoint[0] + LTXdifference
+        #y
+        square.topPoint[1] = prevSquare.topPoint[1] + TLYdifference
+
+        #leftPoint
+        #x
+        square.leftPoint[0] = prevSquare.leftPoint[0] + LTXdifference
+        #y
+        square.leftPoint[1] = prevSquare.leftPoint[1] + TLYdifference
+
+    #top right
+    if (posDir == SquarePos.top_right):
+        RTXdifference = prevSquare.rightPoint[0] - prevSquare.topPoint[0]
+        TRYdifference = prevSquare.topPoint[1] - prevSquare.rightPoint[1]
+
+
+        #setSquarePosFull(square, posDir, previousSquare, RTXdifference, TRYdifference)
+        square.leftPoint = prevSquare.topPoint
+        square.bottomPoint = prevSquare.rightPoint
     
-    previousPos = squareList[-2]
+        #rightPoint
+
+       # x
+        square.rightPoint[0] = prevSquare.rightPoint[0] + RTXdifference
+       # y
+        square.rightPoint[1] = prevSquare.rightPoint[1] + TRYdifference 
+
+        #topPoint
+        #x
+        square.topPoint[0] = prevSquare.topPoint[0] + RTXdifference 
+       # y
+        square.topPoint[1] = prevSquare.topPoint[1] + TRYdifference
+
+
+    #bottom right
+    if (posDir == SquarePos.bottom_right):
+       square.topPoint = prevSquare.rightPoint
+       square.leftPoint = prevSquare.bottomPoint
+       
+       #rightPoint
+       RTXdifference = prevSquare.rightPoint[0] - prevSquare.topPoint[0]
+       TLYdifference = prevSquare.topPoint[1] - prevSquare.leftPoint[1]
+
+       #x
+       square.rightPoint[0] = prevSquare.rightPoint[0] + RTXdifference
+       #y
+       square.rightPoint[1] = prevSquare.bottomPoint[1]
+
+       #bottomPoint
+       #x
+       square.bottomPoint[0] = prevSquare.bottomPoint[0] + RTXdifference
+       #y
+       square.bottomPoint[1] = prevSquare.bottomPoint[1] - TLYdifference
+
+    #bottom left
+    if (posDir == SquarePos.bottom_left):
+       square.topPoint = prevSquare.leftPoint
+       square.rightPoint = prevSquare.bottomPoint
+       
+       #leftPoint
+       LBXdifference = prevSquare.leftPoint[0] - prevSquare.bottomPoint[0]
+       LBYdifference = prevSquare.leftPoint[1] - prevSquare.bottomPoint[1]
+
+       #x
+       square.leftPoint[0] = prevSquare.leftPoint[0] + LBXdifference
+       #y
+       square.leftPoint[1] = prevSquare.bottomPoint[1]
+
+       #bottomPoint
+       #x
+       square.bottomPoint[0] = prevSquare.bottomPoint[0] + LBXdifference
+       #y
+       square.bottomPoint[1] = prevSquare.bottomPoint[1] - LBYdifference 
+
+    #pyautogui.moveTo(square.rightPoint[0], square.rightPoint[1], 5)
+
+def positionNextSquareEnd(square, posDir, baseSquare = None):
+
     
+    
+    previousPos = squareList[1]
+    #print ("length", len(squareList))
     #print("prev left", previousPos.leftPoint)
     #print("prev top", previousPos.topPoint)
     #print("prev right", previousPos.rightPoint)

@@ -1,3 +1,6 @@
+from PIL.Image import NONE
+
+
 class Square:
     def __init__(self):
         self.posInList = None
@@ -5,8 +8,9 @@ class Square:
 
         self.name = ""
         self.ID = 0
-        self.ingamePos = [0,0]
-        self.landType = ""
+        self.ingamePos = None
+        self.landType = None
+        self.isWaterRefill = False
         self.harvestTime = 60
         self.harvestClock = 0
 
