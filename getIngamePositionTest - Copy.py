@@ -49,6 +49,8 @@ cv2.waitKey(0)
 
 words_in_image = pytesseract.image_to_string(open_cv_image2)
 word_list = words_in_image.split()
+if word_list[0] != 'Tile':
+    word_list.pop(0)
 xString = word_list[1]
 yString = word_list[2]
 landString = word_list[4]
