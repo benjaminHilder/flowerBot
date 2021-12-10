@@ -30,6 +30,7 @@ import json
 import cv2
 
 from pytesseract import pytesseract
+from pytesseract import Output
 
 
 script_dir = os.path.dirname(__file__)
@@ -420,7 +421,7 @@ def plantingMenuClick(plantingCommand, time = 0.2):
             moveClick(1044,305, time)   
 def setUp():
 
-    moveClick(1665, 109, 0.3)
+    moveClick(1682, 109, 0.3)
     pyautogui.write('[board click]')
     hudClick(hudArea.water)
     #0x53 == S key
@@ -475,8 +476,66 @@ def openCloseInspectConsole(interaction):
         pyautogui.keyUp("ctrl")
         pyautogui.keyUp("shift")
         consoleActive = False
-
 def getIngamePos_and_landType():
+    x_start_point = 1564
+    y_start_point = 146
+
+    x_howFar = 39
+    y_howFar = 900
+
+
+    xString = ""
+    yString = ""
+    xInt = 0
+    yInt = 0
+    landString = None
+    landEnum = None
+    #print("Taking a screenshot...")
+    screenshot = pyautogui.screenshot(region=(x_start_point, y_start_point, x_howFar, y_howFar))
+    #converting pyautogui screenshot into one that cv2 can read
+    open_cv_image = np.array(screenshot) 
+    open_cv_image = open_cv_image[:, :, ::-1].copy()
+
+    d = pytesseract.image_to_data(open_cv_image, output_type=Output.DICT)
+    n_boxes = len(d['level'])
+
+    (x, y, w, h) = (d['left'][-1], d['top'][-1], d['width'][-1], d['height'][-1])
+    cv2.rectangle(open_cv_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    #print (x, y, w, h)
+
+    newScreenshot = pyautogui.screenshot(region=(x_start_point, y_start_point + y-2, 170, h+4))
+    open_cv_image2 = np.array(newScreenshot) 
+     #Convert RGB to BGR 
+    open_cv_image2 = open_cv_image2[:, :, ::-1].copy()
+    cv2.imshow("new", open_cv_image2)
+    cv2.waitKey(0)
+
+    words_in_image = pytesseract.image_to_string(open_cv_image2)
+    word_list = words_in_image.split()
+    xString = word_list[1]
+    yString = word_list[2]
+    landString = word_list[4]
+
+    #print(xString)
+    #print(yString)
+    #print(landString)
+
+    xClean1 = xString.replace('(', '')
+    xClean2 = xClean1.replace(',', '')
+
+    yClean1 = yString.replace(')', '')
+
+    xInt = int(xClean2)
+    yInt = int(yClean1)
+
+    print(xInt)
+    print(yInt)
+    print(landString)
+
+    return xInt, yInt, landString
+
+    
+def getIngamePos_and_landTypeOld():
     x = 0
     y = 0
 
@@ -486,41 +545,48 @@ def getIngamePos_and_landType():
     landString = None
     landEnum = None
     #print("Taking a screenshot...")
-    screenshot = pyautogui.screenshot(region=(1600, 146, 150, 900))
+    screenshot = pyautogui.screenshot(region=(1565, 146, 190, 900))
 
     #converting pyautogui screenshot into one that cv2 can read
     open_cv_image = np.array(screenshot) 
      #Convert RGB to BGR 
     open_cv_image = open_cv_image[:, :, ::-1].copy()
+
+    #cv2.imshow("s", open_cv_image)
+    #cv2.waitKey(0)
     words_in_image = pytesseract.image_to_string(open_cv_image)
     word_list = words_in_image.split()
+    print ("words in image")
+    print(words_in_image)
 
-
+    #for i in range(len(words_in_image)):
+        #if word_list[i] == ()
 
     for i in range (len(word_list)):
-
-        if word_list[i] == "(":
-            x = word_list[i]
+        
+        if word_list[i] == "Tile":
+            x = word_list[i+1]
             #print("raw x ", x)
             xClean1 =x.replace('(', '')
             xClean2 = xClean1.replace(' ', '')
-            xClean3 = xClean2.replace('©', '')
-            xFullyClean = xClean3.replace(',', '')
 
+            xFullyClean = xClean2.replace(',', '')
+            
             xInt = int(xFullyClean)
+           
             #print("cleaned x ", xClean3)
 
-            y = word_list[i+1]
+            y = word_list[i+2]
             #print("raw y ", y)
             yClean1 = y.replace(' ', '')
-            yClean2 = yClean1.replace('©', '')
-            yFullyClean = yClean2.replace(')', '')
+
+            yFullyClean = yClean1.replace(')', '')
 
             yInt = int(yFullyClean)
             #print("cleaned y ",yClean2)
 
             try:
-                landString = word_list[i+3] 
+                landString = word_list[i+4] 
             except:
                 pass
         if landString != None:
@@ -536,7 +602,7 @@ def getIngamePos_and_landType():
                 landEnum = landKind.water
             elif landString == "ice":
                 landEnum = landKind.ice
-    
+    print("xInt: ", xInt, " yInt: ", yInt, " landEnum: ", landEnum)
     return xInt, yInt, landEnum    
 
 def recordingRefresh():
@@ -1231,6 +1297,7 @@ def createFarmingSquares():
 
 
                             moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
+                            print("top left center == 0,0")
                             ingameX, ingameY, land = getIngamePos_and_landType()
 
                             newSquare.ingamePos = [ingameX, ingameY]
@@ -1252,10 +1319,13 @@ def createFarmingSquares():
                             potentialOutX = squareList[i].centerPoint[0] - topLeftCenterPointDistance[0]
                             potentialOutY = squareList[i].centerPoint[1] - topLeftCenterPointDistance[1]
                             moveClick(potentialOutX, potentialOutY)
+                            print("top left center != 0,0")
                             potentialInX, potentialInY, land = getIngamePos_and_landType()
 
                             #if so 
                             # add it to the list
+                            print("potential in y: ", potentialInY)
+                            print("squareList[i].ingamePos[1]-1 ", squareList[i].ingamePos[1]-1)
                             if potentialInY == squareList[i].ingamePos[1]-1:
 
                                 newSquare = Square()
