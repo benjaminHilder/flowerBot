@@ -507,15 +507,15 @@ def getIngamePos_and_landType():
     open_cv_image2 = np.array(newScreenshot) 
      #Convert RGB to BGR 
     open_cv_image2 = open_cv_image2[:, :, ::-1].copy()
-    cv2.imshow("new", open_cv_image2)
-    cv2.waitKey(0)
+    #cv2.imshow("new", open_cv_image2)
+    #cv2.waitKey(0)
 
     words_in_image = pytesseract.image_to_string(open_cv_image2)
     word_list = words_in_image.split()
 
     if word_list[0] != 'Tile':
         word_list.pop(0)
-        
+
     xString = word_list[1]
     yString = word_list[2]
     landString = word_list[4]
@@ -532,82 +532,26 @@ def getIngamePos_and_landType():
     xInt = int(xClean2)
     yInt = int(yClean1)
 
+
+
+    if landString == "soil":
+        landEnum = landKind.soil
+    elif landString == "stone":
+        landEnum = landKind.stone
+    elif landString == "sand":
+        landEnum = landKind.sand
+    elif landString == "lava":
+        landEnum = landKind.lava
+    elif landString == "water":
+        landEnum = landKind.water
+    elif landString == "ice":
+        landEnum = landKind.ice
+
     print(xInt)
     print(yInt)
-    print(landString)
+    print(landEnum)
 
-    return xInt, yInt, landString
-
-    
-def getIngamePos_and_landTypeOld():
-    x = 0
-    y = 0
-
-    xInt = 0
-    yInt = 0
-
-    landString = None
-    landEnum = None
-    #print("Taking a screenshot...")
-    screenshot = pyautogui.screenshot(region=(1565, 146, 190, 900))
-
-    #converting pyautogui screenshot into one that cv2 can read
-    open_cv_image = np.array(screenshot) 
-     #Convert RGB to BGR 
-    open_cv_image = open_cv_image[:, :, ::-1].copy()
-
-    #cv2.imshow("s", open_cv_image)
-    #cv2.waitKey(0)
-    words_in_image = pytesseract.image_to_string(open_cv_image)
-    word_list = words_in_image.split()
-    print ("words in image")
-    print(words_in_image)
-
-    #for i in range(len(words_in_image)):
-        #if word_list[i] == ()
-
-    for i in range (len(word_list)):
-        
-        if word_list[i] == "Tile":
-            x = word_list[i+1]
-            #print("raw x ", x)
-            xClean1 =x.replace('(', '')
-            xClean2 = xClean1.replace(' ', '')
-
-            xFullyClean = xClean2.replace(',', '')
-            
-            xInt = int(xFullyClean)
-           
-            #print("cleaned x ", xClean3)
-
-            y = word_list[i+2]
-            #print("raw y ", y)
-            yClean1 = y.replace(' ', '')
-
-            yFullyClean = yClean1.replace(')', '')
-
-            yInt = int(yFullyClean)
-            #print("cleaned y ",yClean2)
-
-            try:
-                landString = word_list[i+4] 
-            except:
-                pass
-        if landString != None:
-            if landString == "soil":
-                landEnum = landKind.soil
-            elif landString == "stone":
-                landEnum = landKind.stone
-            elif landString == "sand":
-                landEnum = landKind.sand
-            elif landString == "lava":
-                landEnum = landKind.lava
-            elif landString == "water":
-                landEnum = landKind.water
-            elif landString == "ice":
-                landEnum = landKind.ice
-    print("xInt: ", xInt, " yInt: ", yInt, " landEnum: ", landEnum)
-    return xInt, yInt, landEnum    
+    return xInt, yInt, landEnum
 
 def recordingRefresh():
     recorder.runListeners()
