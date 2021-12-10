@@ -116,6 +116,7 @@ class SquarePos(Enum):
     top_right = 2
     bottom_right = 3
     bottom_left = 4
+    false_position = 5
 class landKind(Enum):
     soil = 1
     stone = 2
@@ -477,7 +478,7 @@ def openCloseInspectConsole(interaction):
         pyautogui.keyUp("shift")
         consoleActive = False
 def getIngamePos_and_landType():
-    x_start_point = 1564
+    x_start_point = 1560
     y_start_point = 146
 
     x_howFar = 39
@@ -532,8 +533,6 @@ def getIngamePos_and_landType():
     xInt = int(xClean2)
     yInt = int(yClean1)
 
-
-
     if landString == "soil":
         landEnum = landKind.soil
     elif landString == "stone":
@@ -547,9 +546,9 @@ def getIngamePos_and_landType():
     elif landString == "ice":
         landEnum = landKind.ice
 
-    print(xInt)
-    print(yInt)
-    print(landEnum)
+    #print(xInt)
+    #print(yInt)
+    #print(landEnum)
 
     return xInt, yInt, landEnum
 
@@ -1216,348 +1215,94 @@ def calculateOutgameDefaultSquarePos(square):
     #print("finalRight after", finalRightSide)
     pyautogui.moveTo(savedMousePositon)
     square.setPoints(finalLeftSide, finalTopSide, finalRightSide, finalBottomSide)
-
 def createFarmingSquares():
-    #while place key is down
     while True:
-    #s key
+        #s key
         if win32api.GetKeyState(0x53) < 0:
-
-            for i in range (len(squareList)):
+            #if mouse is next to i square get dir
+            for i in range(len(squareList)):
                 if i == 0: continue
-                try:
-                    #print("Length: ", len(squareList))
-                    isNextTo, squarePos = isMouseInNewSquarePos(pyautogui.position()[0], pyautogui.position()[1], squareList[i])
 
-                except:
-                    pass
-                #if mouse position is outside of squares position
-                #detect what direction that is
-                if isNextTo:
-                    if squarePos == squarePos.top_left:
-                        #if centerpoint distance hasn't been created for this distance
-                        #add square based on the default square
+                squarePosEnum, testSquare = isMouseInNewSquarePos(pyautogui.position()[0], pyautogui.position()[1], squareList[i])
+                if squarePosEnum != SquarePos.false_position:
 
-                        if topLeftCenterPointDistance == [0,0]:
-                            newSquare = Square()
-                            positionNextSquare(newSquare, squareList[i], squarePos.top_left)
-                            newSquare.centerPoint = SqCenterPoint(newSquare)
+                    #print (squarePosEnum)
 
-
-                            moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
-                            print("top left center == 0,0")
-                            ingameX, ingameY, land = getIngamePos_and_landType()
-
-                            newSquare.ingamePos = [ingameX, ingameY]
-                            newSquare.landType = land
-                            
-                            squareList.append(newSquare)
-                            
-
-
-                            topLeftCenterPointDistance[0] = squareList[i].centerPoint[0] - newSquare.centerPoint[0]
-                            topLeftCenterPointDistance[1] = squareList[i].centerPoint[1] - newSquare.centerPoint[1]
-
-                            print("success")
-                            
-                        elif topLeftCenterPointDistance != [0,0]:
-
-                            #confirm with in game pos if its correct
-
-                            potentialOutX = squareList[i].centerPoint[0] - topLeftCenterPointDistance[0]
-                            potentialOutY = squareList[i].centerPoint[1] - topLeftCenterPointDistance[1]
-                            moveClick(potentialOutX, potentialOutY)
-                            print("top left center != 0,0")
-                            potentialInX, potentialInY, land = getIngamePos_and_landType()
-
-                            #if so 
-                            # add it to the list
-                            print("potential in y: ", potentialInY)
-                            print("squareList[i].ingamePos[1]-1 ", squareList[i].ingamePos[1]-1)
-                            if potentialInY == squareList[i].ingamePos[1]-1:
-
-                                newSquare = Square()
-                                positionNextSquare(newSquare, squareList[i], squarePos.top_left)
-
-                                #newSquare.centerPoint = [potentialOutX, potentialOutY]
-                                newSquare.centerPoint = SqCenterPoint(newSquare)
-                                moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
-                                ingameX, ingameY, land = getIngamePos_and_landType()
-                                
-
-                                newSquare.ingamePos = [ingameX, ingameY]
-                                #newSquare.landType = land
-
-                                squareList.append(newSquare)
-                                print("success")
-                            #if not
-                            # move the cursor in a position that would be correct
-                            #for example if we are too much to the left side, check right side
-                            #keep checking until we find desired ingame pos
-                            elif potentialInY != squareList[i].ingamePos[1]-1:
-                                expectedIngamePos = [squareList[1].ingamePos[0] + topRightCenterPointDistance[0],squareList[1].ingamePos[1] + topRightCenterPointDistance[1]]
-                                print ("Incorrect ingamepos")
-                                
-                    if squarePos == squarePos.top_right:
-                        #if centerpoint distance hasn't been created for this distance
-                        #add square based on the default square
-
-                        if topRightCenterPointDistance == [0,0]:
-                            newSquare = Square()
-                            positionNextSquare(newSquare, squareList[i], squarePos.top_right)
-                            newSquare.centerPoint = SqCenterPoint(newSquare)
-
-
-                            moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
-                            ingameX, ingameY, land = getIngamePos_and_landType()
-
-                            newSquare.ingamePos = [ingameX, ingameY]
-                            newSquare.landType = land
-                            
-                            squareList.append(newSquare)
-                            
-                            topRightCenterPointDistance[0] = squareList[i].centerPoint[0] - newSquare.centerPoint[0]
-                            topRightCenterPointDistance[1] = squareList[i].centerPoint[1] - newSquare.centerPoint[1]
-
-                            print("success")
-                            
-                        elif topRightCenterPointDistance != [0,0]:
-
-                            #confirm with in game pos if its correct
-
-                            potentialOutX = squareList[i].centerPoint[0] - topRightCenterPointDistance[0]
-                            potentialOutY = squareList[i].centerPoint[1] - topRightCenterPointDistance[1]
-                            moveClick(potentialOutX, potentialOutY)
-                            potentialInX, potentialInY, land = getIngamePos_and_landType()
-
-                            #if so 
-                            # add it to the list
-                            if potentialInY == squareList[i].ingamePos[1]-1:
-
-                                newSquare = Square()
-                                positionNextSquare(newSquare, squareList[i], squarePos.top_right)
-
-                                #newSquare.centerPoint = [potentialOutX, potentialOutY]
-                                newSquare.centerPoint = SqCenterPoint(newSquare)
-                                moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
-                                ingameX, ingameY, land = getIngamePos_and_landType()
-                                
-
-                                newSquare.ingamePos = [ingameX, ingameY]
-                                #newSquare.landType = land
-
-                                squareList.append(newSquare)
-                                print("success")
-                            #if not
-                            # move the cursor in a position that would be correct
-                            #for example if we are too much to the left side, check right side
-                            #keep checking until we find desired ingame pos
-                            elif potentialInY != squareList[i].ingamePos[1]-1:
-                                expectedIngamePos = [squareList[1].ingamePos[0] + topLeftCenterPointDistance[0],squareList[1].ingamePos[1] + topLeftCenterPointDistance[1]]
-                                print ("Incorrect ingamepos")
-                            
-                    if squarePos == squarePos.bottom_left:
-                        #if centerpoint distance hasn't been created for this distance
-                        #add square based on the default square
-
-                        if bottomLeftCenterPointDistance == [0,0]:
-                            newSquare = Square()
-                            positionNextSquare(newSquare, squareList[i], squarePos.bottom_left)
-                            newSquare.centerPoint = SqCenterPoint(newSquare)
-
-
-
-                            moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
-                            ingameX, ingameY, land = getIngamePos_and_landType()
-
-                            newSquare.ingamePos = [ingameX, ingameY]
-                            newSquare.landType = land
-                            
-                            squareList.append(newSquare)
-                            
-                            print("squareList[i].centerPoint[0]: ", squareList[i].centerPoint[0])
-                            print("newSquare.centerPoint[0]: ", newSquare.centerPoint[0])
-                            print("squareList[i].centerPoint[1]: ", squareList[i].centerPoint[1])
-                            print("newSquare.centerPoint[1]: ", newSquare.centerPoint[1])
-
-                            bottomLeftCenterPointDistance[0] = squareList[i].centerPoint[0] - newSquare.centerPoint[0]
-                            bottomLeftCenterPointDistance[1] = newSquare.centerPoint[1] - squareList[i].centerPoint[1]
-
-                            print("bottomLeftCenterPointDistance[0]: ", bottomLeftCenterPointDistance[0])
-                            print("bottomLeftCenterPointDistance[1]: ", bottomLeftCenterPointDistance[1])
-                            print("success")
-                            
-                        elif bottomLeftCenterPointDistance != [0,0]:
-
-                            #confirm with in game pos if its correct
-
-                            potentialOutX = squareList[i+1].centerPoint[0] - bottomLeftCenterPointDistance[0]
-                            potentialOutY = squareList[i+1].centerPoint[1] + bottomLeftCenterPointDistance[1]
-                            #moveClick(potentialOutX, potentialOutY)
-
-                            moveClick(squareList[i+1].centerPoint[0], squareList[i].centerPoint[1])
-                            potentialInX, potentialInY, land = getIngamePos_and_landType()
-
-                            #if so 
-                            # add it to the list
-                            print("portentialInY: ", potentialInY)
-                            print("squareList[i].ingamePos[1]+1: ", squareList[i].ingamePos[1]+1)
-
-                            if potentialInY == squareList[i].ingamePos[1]+1:
-
-                                newSquare = Square()
-                                positionNextSquare(newSquare, squareList[i], squarePos.bottom_left)
-
-                                #newSquare.centerPoint = [potentialOutX, potentialOutY]
-                                newSquare.centerPoint = SqCenterPoint(newSquare)
-                                moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
-                                ingameX, ingameY, land = getIngamePos_and_landType()
-                                
-
-                                newSquare.ingamePos = [ingameX, ingameY]
-                                #newSquare.landType = land
-
-                                squareList.append(newSquare)
-                                print("success")
-                            #if not
-                            # move the cursor in a position that would be correct
-                            #for example if we are too much to the left side, check right side
-                            #keep checking until we find desired ingame pos
-                            elif potentialInY != squareList[i].ingamePos[1]-1:
-                                expectedIngamePos = [squareList[1].ingamePos[0] + bottomLeftCenterPointDistance[0],squareList[1].ingamePos[1] + bottomLeftCenterPointDistance[1]]
-                                print ("Incorrect ingamepos")
-                    if squarePos == squarePos.bottom_right:
-                        #if centerpoint distance hasn't been created for this distance
-                        #add square based on the default square
-
-                        if bottomRightCenterPointDistance == [0,0]:
-                            newSquare = Square()
-                            positionNextSquare(newSquare, squareList[i], squarePos.bottom_right)
-                            newSquare.centerPoint = SqCenterPoint(newSquare)
-
-
-                            moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
-                            ingameX, ingameY, land = getIngamePos_and_landType()
-
-                            newSquare.ingamePos = [ingameX, ingameY]
-                            newSquare.landType = land
-                            
-                            squareList.append(newSquare)
-                            
-                            bottomRightCenterPointDistance[0] = squareList[i].centerPoint[0] - newSquare.centerPoint[0]
-                            bottomRightCenterPointDistance[1] = squareList[i].centerPoint[1] - newSquare.centerPoint[1]
-
-                            print("success")
-                            
-                        elif bottomRightCenterPointDistance != [0,0]:
-
-                            #confirm with in game pos if its correct
-
-                            potentialOutX = squareList[i].centerPoint[0] - bottomRightCenterPointDistance[0]
-                            potentialOutY = squareList[i].centerPoint[1] - bottomRightCenterPointDistance[1]
-                            moveClick(potentialOutX, potentialOutY)
-                            potentialInX, potentialInY, land = getIngamePos_and_landType()
-
-                            #if so 
-                            # add it to the list
-                            if potentialInY == squareList[i].ingamePos[1]+1:
-
-                                newSquare = Square()
-                                positionNextSquare(newSquare, squareList[i], squarePos.bottom_right)
-
-                                #newSquare.centerPoint = [potentialOutX, potentialOutY]
-                                newSquare.centerPoint = SqCenterPoint(newSquare)
-                                moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1])
-                                ingameX, ingameY, land = getIngamePos_and_landType()
-                                
-
-                                newSquare.ingamePos = [ingameX, ingameY]
-                                #newSquare.landType = land
-
-                                squareList.append(newSquare)
-                                print("success")
-                            #if not
-                            # move the cursor in a position that would be correct
-                            #for example if we are too much to the left side, check right side
-                            #keep checking until we find desired ingame pos
-                            elif potentialInY != squareList[i].ingamePos[1]-1:
-                                expectedIngamePos = [squareList[1].ingamePos[0] + bottomRightCenterPointDistance[0],squareList[1].ingamePos[1] + bottomRightCenterPointDistance[1]]
-                                print ("Incorrect ingamepos")
-
-                    
-
-        
-
-            #if centerpoint distance has been created for this distance
-                #add square based on centerpoint distance
-                #confirm with in game pos if its correct
-
+                    #print(i)
+                    addNewSquare(squareList[i], testSquare, squarePosEnum)
+                    break       
+            
         #q key
         if win32api.GetKeyState(0x51) < 0: 
             print('finished setting up farming positions')
             break  
         #break
-             
+
+def testIngamePos(oldSquare, newSquare):
+    outCome = [0,0]
+
+    moveClick(oldSquare.centerPoint[0], oldSquare.centerPoint[1], 0)
+    oldX, oldY, oldLand = getIngamePos_and_landType()
+
+    moveClick(newSquare.centerPoint[0], newSquare.centerPoint[1], 0)
+    newX, newY, newLand = getIngamePos_and_landType()
+    
+    outCome = [oldX - newX, oldY - newY]
+    #print("outcome: ", outCome)
+    return outCome, newX, newY, newLand
+
+
+def addNewSquare(oldSquare, newSquare, squarePosEnum):
+    #if squarePosEnum == desiredEnum:
+    newSquare.centerPoint = SqCenterPoint(newSquare)
+    ingameCompare, newX, newY, newLand = testIngamePos(oldSquare, newSquare)
+    
+    if squarePosEnum == SquarePos.top_left or squarePosEnum == SquarePos.top_right:
+        correctIngameDif = 1
+    elif squarePosEnum == SquarePos.bottom_left or squarePosEnum == SquarePos.bottom_right:
+        correctIngameDif = -1
+    
+    if ingameCompare[1] == correctIngameDif:
+        newSquare.ingamePos = [newX, newY]
+        newSquare.landType = newLand
+        squareList.append(newSquare)
+        #print("Sqaure has been appened")
+           
 def isMouseInNewSquarePos(x, y, oldSquare):
     testSquare = Square()
     #print ("testSquare right point", testSquare.rightPoint)
     #testSquare.realSquare = True
     #squareList.append(testSquare)
 #top right
-    squarePosition = None
+    squarePosition = SquarePos.false_position
+    
     #print (x)
-    #print (y)
+#top right
     if x > oldSquare.topPoint[0] and y < oldSquare.rightPoint[1]:
-        squarePosition = SquarePos.top_right
-        positionNextSquare(testSquare, oldSquare, squarePosition)
-
-        point = Point(x,y)
-        shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
-        if shapelySquare.contains(point):
-            #print(shapelySquare.contains(point), squarePosition) 
-           
-            return shapelySquare.contains(point), squarePosition
+        squarePosition = testIfMouseIsWithinLogic(x, y, testSquare, oldSquare, SquarePos.top_right)
 #top left
-    if x < oldSquare.topPoint[0] and y < oldSquare.rightPoint[1]:
-        squarePosition = SquarePos.top_left
-        
-        positionNextSquare(testSquare, oldSquare, squarePosition)
-
-        point = Point(x,y)
-        shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
-        if shapelySquare.contains(point):
-            #print(shapelySquare.contains(point), squarePosition)
-            
-            return shapelySquare.contains(point), squarePosition
-        
+    elif x < oldSquare.topPoint[0] and y < oldSquare.rightPoint[1]:
+        squarePosition = testIfMouseIsWithinLogic(x, y, testSquare, oldSquare, SquarePos.top_left)
+        pass
     #bottom right
-    if x > oldSquare.topPoint[0] and y > oldSquare.rightPoint[1]:
-        squarePosition = SquarePos.bottom_right
-        positionNextSquare(testSquare, oldSquare, squarePosition)
-
-        point = Point(x,y)
-        shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
-        if shapelySquare.contains(point):      
-            #print(shapelySquare.contains(point), squarePosition) 
-            
-            return shapelySquare.contains(point), squarePosition
+    elif x > oldSquare.topPoint[0] and y > oldSquare.rightPoint[1]:
+        squarePosition = testIfMouseIsWithinLogic(x, y, testSquare, oldSquare, SquarePos.bottom_right)
         
     #bottom left
-    if x < oldSquare.topPoint[0] and y > oldSquare.rightPoint[1]:
-        squarePosition = SquarePos.bottom_left
-        positionNextSquare(testSquare, oldSquare, squarePosition)
+    elif x < oldSquare.topPoint[0] and y > oldSquare.rightPoint[1]:
+        squarePosition = testIfMouseIsWithinLogic(x, y, testSquare, oldSquare, SquarePos.bottom_left)
+
+    return squarePosition, testSquare
+
+def testIfMouseIsWithinLogic(x, y, testSquare, oldSquare, squarePos):
+        positionNextSquare(testSquare, oldSquare, squarePos)
 
         point = Point(x,y)
         shapelySquare = Polygon([testSquare.leftPoint, testSquare.topPoint, testSquare.rightPoint, testSquare.bottomPoint])
-        if shapelySquare.contains(point): 
-            #print(shapelySquare.contains(point), squarePosition)
-            
-            return shapelySquare.contains(point), squarePosition
-    else:
-        #print(False, squarePosition)
-        
-        return False, squarePosition
-
+        if shapelySquare.contains(point):
+            return squarePos
+        else:
+            return SquarePos.false_position
 def createSquarePlanOld():
     canPlace = True
     side = None

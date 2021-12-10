@@ -14,7 +14,7 @@ from time import sleep
 from pytesseract import Output
 
 pytesseract.tesseract_cmd = "E:\\Program Files\\Tesseract-OCR\\tesseract.exe"
-x_start_point = 1564
+x_start_point = 1560
 y_start_point = 146
 
 x_howFar = 39
@@ -35,10 +35,11 @@ open_cv_image = open_cv_image[:, :, ::-1].copy()
 
 d = pytesseract.image_to_data(open_cv_image, output_type=Output.DICT)
 n_boxes = len(d['level'])
+print("n_boxes ", n_boxes)
 
 (x, y, w, h) = (d['left'][-1], d['top'][-1], d['width'][-1], d['height'][-1])
 cv2.rectangle(open_cv_image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-#print (x, y, w, h)
+print (x, y, w, h)
 
 newScreenshot = pyautogui.screenshot(region=(x_start_point, y_start_point + y-2, 170, h+4))
 open_cv_image2 = np.array(newScreenshot) 
