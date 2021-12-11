@@ -35,6 +35,8 @@ from pytesseract import Output
 
 script_dir = os.path.dirname(__file__)
 
+quittingApp = False
+
 firstRun = True
 nextRun = False
 squareList = []
@@ -131,36 +133,42 @@ class openCloseConsole(Enum):
 
 
 def main():
-    countdownTimer()
-    #water doesnt bring any menus up on good or bad clicks
-    hudClick(hudArea.water)
-    openCloseInspectConsole(openCloseConsole.open)
-    #to prevent typing in console
-    hudClick(hudArea.water)
-    setUp()
-    print("to call create farming squares")
-    createFarmingSquares()
-    #while True:
-    #    if win32api.GetKeyState(0x01) < 0:
-    #        #sleep(0.3)
-    #        #landXPos, landYPos, landType = getIngamePos_and_landType()
-    #        #print(landXPos, landYPos, landType)
-    #        #pass
-    #    if win32api.GetKeyState(0X02) < 0:
-    #        openCloseInspectConsole(openCloseConsole.close)
-    #        break
+    while quittingApp == False:
+        countdownTimer()
+        #water doesnt bring any menus up on good or bad clicks
+        hudClick(hudArea.water)
+        openCloseInspectConsole(openCloseConsole.open)
+        #to prevent typing in console
+        hudClick(hudArea.water)
+        setUp()
+        print("to call create farming squares")
+        createFarmingSquares()
+        checkForHarvests(600)
 
-#
+        #while True:
+        #    if win32api.GetKeyState(0x01) < 0:
+        #        #sleep(0.3)
+        #        #landXPos, landYPos, landType = getIngamePos_and_landType()
+        #        #print(landXPos, landYPos, landType)
+        #        #pass
+        #    if win32api.GetKeyState(0X02) < 0:
+        #        openCloseInspectConsole(openCloseConsole.close)
+        #        break
 
-#
-    #print("press s to set default square position")
-    #createDefaultSquare(baseSquare)
-    #baseSquare.realSquare = True
-    #squareList.append(baseSquare)
-#
-    #createSquarePlan()
-#
-    #checkForHarvests(600)
+    if quittingApp == True:
+        print("bot has finished")
+        print("thank you")
+    #
+
+    #
+        #print("press s to set default square position")
+        #createDefaultSquare(baseSquare)
+        #baseSquare.realSquare = True
+        #squareList.append(baseSquare)
+    #
+        #createSquarePlan()
+    #
+        #checkForHarvests(600)
 
 
 def hudClick(hudCommand, time=0.2):
@@ -430,8 +438,12 @@ def setUp():
     print("press s key on the position of refill water")
 
     while True:
+
         if win32api.GetKeyState(0x53) < 0:
             setupWaterPosition()
+            break
+        if win32api.GetKeyState(0x1B) < 0:
+            quittingApp = True
             break
     print("setting up default square...")
     print("find a square you own that has a yellow boarder (typically Smoldering Ground)")
@@ -440,10 +452,17 @@ def setUp():
     print("press s key on this area")
 
     while True:
-        if win32api.GetKeyState(0x53) < 0:
+
+        if win32api.GetKeyState(0x53) < 0 and quittingApp == False:
 
             createDefaultSquare()
             #positionToPurpleTop(squareList[1],pyautogui.position()[0], pyautogui.position()[1], squareList[1].height, squareList[1].width, squareList[1].topDiff)
+            break
+
+        if win32api.GetKeyState(0x1B) < 0:
+            quittingApp = True
+            break
+        elif quittingApp == True:
             break
 def startUp():
     #refresh page
@@ -733,50 +752,141 @@ def waitTillPlantsAreLoaded():
     pass
 
 def checkForHarvests(timeBeforeCheck = 60):
-    #print("checking for harvest")
+    while win32api.GetKeyState(0x51) > -1:
+        #print("checking for harvest")
 
-    #refresh the page to avoid memory crash of web browerser
-    pyautogui.keyDown("ctrl")
-    pyautogui.press("r")
-    pyautogui.keyUp("ctrl")
-    #sleep to wait for the game to load
-    sleep(20)
-    #move back to where we were 
-    hudClick(hudArea.select)
-    playbackRefresh("refresh_positioning.json")
-    waitTillPlantsAreLoaded()
-    checkFirstSquarePos()
-    
-
-    for i in range(len(squareList)):
-        if i == 0: continue
+        #refresh the page to avoid memory crash of web browerser
+        pyautogui.keyDown("ctrl")
+        pyautogui.press("r")
+        pyautogui.keyUp("ctrl")
+        #sleep to wait for the game to load
+        sleep(20)
+        #move back to where we were 
+        hudClick(hudArea.water)
+        #waitTillPlantsAreLoaded()
+        onRefreshFindFarm()
         
-        if squareList[i].harvestClock == 0:
+        for i in range(len(squareList)):
+            if i == 0: continue
 
-            harvestQueue.append(squareList[i])
-  
-    currentHarvestQueue = harvestQueue
-    currentPlantingQueue = plantingQueue
+            if squareList[i].harvestClock == 0:
+
+                harvestQueue.append(squareList[i])
     
-    harvestQueue.clear
-    plantingQueue.clear
+        currentHarvestQueue = harvestQueue
+        currentPlantingQueue = plantingQueue
+
+        harvestQueue.clear
+        plantingQueue.clear
+
+        for i in range (len(currentHarvestQueue)):
+            harvestFlower(currentHarvestQueue[i])
+            #print("harvesting ", i)
+
+        currentHarvestQueue.clear
+
+        for i in range (len(currentPlantingQueue)):
+            plantFlower(currentPlantingQueue[i])
+            #print("planting ", i)
+
+        currentPlantingQueue.clear
+        Timer(timeBeforeCheck, checkForHarvests, args=[timeBeforeCheck]).start()
+
+
+        #callCheckHarvest(timeBeforeCheck)
+    if win32api.GetKeyState(0x1B) < 0:
+        print("bot is now closing")
+
+def onRefreshFindFarm():
+    #click on square
+    hudClick(hudArea.water)
+    openCloseConsole(openCloseConsole.open)
+    hudClick(hudArea.water)
+    addNewSquare = Square()
+    moveClick(500, 500)
     
-    for i in range (len(currentHarvestQueue)):
-        harvestFlower(currentHarvestQueue[i])
-        #print("harvesting ", i)
 
-    currentHarvestQueue.clear
 
-    for i in range (len(currentPlantingQueue)):
-        plantFlower(currentPlantingQueue[i])
-        #print("planting ", i)
+    #look at in game pos
+    checkingX, checkingY, checkingLand = getIngamePos_and_landType()
+    foundMatch = False
+    foundMatchSquare = None
+    #random first click
+    for i in range (len(squareList)):
+        if squareList[i] == 0: continue
+
+        if squareList[i].ingamePos != [checkingX, checkingY]:
+            continue
+        elif squareList[i].ingamePos == [checkingX, checkingY]:
+            foundMatch = True
+            foundMatchSquare = squareList[i]
+            break
+    #search
+
+    while True:
+        harvestRelignIfSideHit()
+        if foundMatch == True:
+            pyautogui.dragTo(squareList[i].centerPoint[0], squareList[i].centerPoint[1], 1)
+            break
         
-    currentPlantingQueue.clear
-    Timer(timeBeforeCheck, checkForHarvests, args=[timeBeforeCheck]).start()
+        else:
+            #top left x is less and y is less
+            if checkingX < squareList[2].ingamePos[0] and checkingY < squareList[2].ingamePos[1]:
+                moveClick(pyautogui.position()[0] + bottomRightCenterPointDistance[0], pyautogui.position()[1] + bottomRightCenterPointDistance[1])
+                pyautogui.click()
+                checkingX, checkingY, checkingLand = getIngamePos_and_landType()
+            
+            #top right x is greater y is less
+            if checkingX > squareList[2].ingamePos[0] and checkingY < squareList[2].ingamePos[1]:
+                moveClick(pyautogui.position()[0] + bottomLeftCenterPointDistance[0], pyautogui.position()[1] + bottomLeftCenterPointDistance[1])
+                pyautogui.click()
+                checkingX, checkingY, checkingLand = getIngamePos_and_landType()
+            #bottom left x is less and y is greater
+            if checkingX < squareList[2].ingamePos[0] and checkingY > squareList[2].ingamePos[1]:
+                moveClick(pyautogui.position()[0] + topRightCenterPointDistance[0], pyautogui.position()[1] + topRightCenterPointDistance[1])
+                pyautogui.click()
+                checkingX, checkingY, checkingLand = getIngamePos_and_landType()
+            #bottom right x is greater y is greater
+            if checkingX > squareList[2].ingamePos[0] and checkingY > squareList[2].ingamePos[1]:
+                moveClick(pyautogui.position()[0] + topLeftCenterPointDistance[0], pyautogui.position()[1] + topLeftCenterPointDistance[1])
+                pyautogui.click()
+                checkingX, checkingY, checkingLand = getIngamePos_and_landType()
+    pass
 
-
-    #callCheckHarvest(timeBeforeCheck)
-
+def harvestRelignIfSideHit():
+        #if left side
+    if pyautogui.position[0] < 127:
+        #if top left
+        if pyautogui.position[1] <= 530:
+            pyautogui.dragTo(1165, 951, 2)
+        #if bottom left
+        if pyautogui.position[1] > 530:
+            pyautogui.dragTo(1315, 207, 2)
+    #if right side
+    if pyautogui.position[0] > 1385: 
+        # if top right
+        if pyautogui.position[1] <= 530:
+            pyautogui.dragTo(250, 927, 2)
+        # if bottom right
+        elif pyautogui.position[1] > 530:
+            pyautogui.dragTo(213, 221, 2)
+    #if top side
+    if pyautogui.position[1] < 127:
+        #if top left
+        if pyautogui.position[0] <= 717:
+            pyautogui.dragTo(1165, 951, 2)
+        #if top right
+        elif pyautogui.position[0] > 717:
+            pyautogui.dragTo(250, 927, 2)
+            
+    #if bottom side
+    if pyautogui.position[1] > 970 :
+        #if bottom left
+        if pyautogui.position[0] <= 717:
+            pyautogui.dragTo(1315, 207, 2)
+        #if bottom right
+        elif pyautogui.position[0] > 717:
+            pyautogui.dragTo(213, 221, 2)
     
 def harvesting():
     if len(harvestQueue) != 0:
@@ -1216,9 +1326,11 @@ def calculateOutgameDefaultSquarePos(square):
     pyautogui.moveTo(savedMousePositon)
     square.setPoints(finalLeftSide, finalTopSide, finalRightSide, finalBottomSide)
 def createFarmingSquares():
+    canPlace = True
     while True:
         #s key
-        if win32api.GetKeyState(0x53) < 0:
+        if win32api.GetKeyState(0x53) < 0 and canPlace == True:
+            canPlace = False
             #if mouse is next to i square get dir
             for i in range(len(squareList)):
                 if i == 0: continue
@@ -1230,12 +1342,25 @@ def createFarmingSquares():
 
                     #print(i)
                     addNewSquare(squareList[i], testSquare, squarePosEnum)
-                    break       
+                    break   
+
+        if win32api.GetKeyState(0x53) > -1 and canPlace == False:
+            print("center: ", squareList[-i].centerPoint)
+            print("leftside: ", squareList[-i].leftPoint)
+            cv.destroyAllWindows()
+            drawDiamonds(blank)
+            cv.waitKey(1)
+            canPlace = True   
             
         #q key
         if win32api.GetKeyState(0x51) < 0: 
             print('finished setting up farming positions')
             break  
+        
+        if win32api.GetKeyState(0x1B) < 0:
+            quittingApp = True
+            break
+
         #break
 
 def testIngamePos(oldSquare, newSquare):
@@ -1263,10 +1388,28 @@ def addNewSquare(oldSquare, newSquare, squarePosEnum):
         correctIngameDif = -1
     
     if ingameCompare[1] == correctIngameDif:
+
         newSquare.ingamePos = [newX, newY]
         newSquare.landType = newLand
         squareList.append(newSquare)
         #print("Sqaure has been appened")
+        global topLeftCenterPointDistance
+        global topRightCenterPointDistance
+        global bottomLeftCenterPointDistance
+        global bottomRightCenterPointDistance
+        
+        if squarePosEnum == SquarePos.top_left and topLeftCenterPointDistance == [0,0]:
+            topLeftCenterPointDistance = [oldSquare.centerPoint[0] - newSquare.centerPoint[0], oldSquare.centerPoint[1] - newSquare.centerPoint[1]]
+        
+        elif squarePosEnum == SquarePos.top_right and topRightCenterPointDistance == [0,0]:
+            topRightCenterPointDistance = [oldSquare.centerPoint[0] - newSquare.centerPoint[0], oldSquare.centerPoint[1] - newSquare.centerPoint[1]]
+        
+        elif squarePosEnum == SquarePos.bottom_left and bottomLeftCenterPointDistance == [0,0]:
+            bottomLeftCenterPointDistance = [oldSquare.centerPoint[0] - newSquare.centerPoint[0], oldSquare.centerPoint[1] - newSquare.centerPoint[1]]
+        
+        elif squarePosEnum == SquarePos.bottom_right and bottomRightCenterPointDistance == [0,0]:
+            bottomRightCenterPointDistance = [oldSquare.centerPoint[0] - newSquare.centerPoint[0], oldSquare.centerPoint[1] - newSquare.centerPoint[1]]
+            
            
 def isMouseInNewSquarePos(x, y, oldSquare):
     testSquare = Square()
@@ -2191,7 +2334,9 @@ def drawDiamond(img, leftPoint, topPoint, rightPoint, bottomPoint, colour, thick
     cv.line(img, bottomPoint, leftPoint, colour, thickness)
 
 def drawAllDiamonds(img):
+    
     for i, sqaure in enumerate(squareList):
+        if i == 0: continue
         #print (squareList[i].leftPoint)
         drawDiamond(img, squareList[i].leftPoint, squareList[i].topPoint, 
                          squareList[i].rightPoint, squareList[i].bottomPoint,
