@@ -133,17 +133,17 @@ class openCloseConsole(Enum):
 
 
 def main():
-    while quittingApp == False:
-        countdownTimer()
-        #water doesnt bring any menus up on good or bad clicks
-        hudClick(hudArea.water)
-        openCloseInspectConsole(openCloseConsole.open)
-        #to prevent typing in console
-        hudClick(hudArea.water)
-        setUp()
-        print("to call create farming squares")
-        createFarmingSquares()
-        checkForHarvests(600)
+    #while quittingApp == False:
+    countdownTimer()
+    #water doesnt bring any menus up on good or bad clicks
+    hudClick(hudArea.water)
+    openCloseInspectConsole(openCloseConsole.open)
+    #to prevent typing in console
+    hudClick(hudArea.water)
+    setUp()
+    print("to call create farming squares")
+    createFarmingSquares()
+    checkForHarvests(600)
 
         #while True:
         #    if win32api.GetKeyState(0x01) < 0:
@@ -155,9 +155,9 @@ def main():
         #        openCloseInspectConsole(openCloseConsole.close)
         #        break
 
-    if quittingApp == True:
-        print("bot has finished")
-        print("thank you")
+    #if quittingApp == True:
+        #print("bot has finished")
+        #print("thank you")
     #
 
     #
@@ -172,7 +172,6 @@ def main():
 
 
 def hudClick(hudCommand, time=0.2):
-    global consoleActive
     if hudCommand == hudArea.bag:
         moveClick(120, 970, time)
     if consoleActive == False:
@@ -199,7 +198,6 @@ def hudClick(hudCommand, time=0.2):
             moveClick(730, 970, time)
 
 def hudCommands(hudOrder, square=None, flower=None, time =0.2):
-    global consoleActive
     if consoleActive == False:
         if hudOrder == hudAction.selectLand:
             hudClick(hudArea.select)
@@ -242,7 +240,6 @@ def hudCommands(hudOrder, square=None, flower=None, time =0.2):
             moveClickSquare(square, time)
 
 def bagClick(bagCommand, time=0.2):
-    global consoleActive
     if consoleActive == False:
         if bagCommand == bagArea.map:
             moveClick(725, 317, time)
@@ -264,7 +261,6 @@ def bagClick(bagCommand, time=0.2):
 
 
 def flowerMenuClick(flowerCommand, time=0.2):
-    global consoleActive
     if consoleActive == False:
         if flowerCommand == flowerArea.tile1:
             moveClick(720, 420, time)
@@ -367,7 +363,6 @@ def flowerMenuClick(flowerCommand, time=0.2):
             moveClick(938, 360, time)
 
 def plantingMenuClick(plantingCommand, time = 0.2):
-    global consoleActive
     if consoleActive == False:
         if plantingCommand == flowerArea.tile1:
             moveClick(690, 470, time)
@@ -427,7 +422,7 @@ def plantingMenuClick(plantingCommand, time = 0.2):
             moveClick(930, 640, time)
 
         if plantingCommand == bagArea.exit:
-            moveClick(1044,305, time)   
+            moveClick(1090,333, time)   
 def setUp():
 
     moveClick(1682, 109, 0.3)
@@ -442,9 +437,9 @@ def setUp():
         if win32api.GetKeyState(0x53) < 0:
             setupWaterPosition()
             break
-        if win32api.GetKeyState(0x1B) < 0:
-            quittingApp = True
-            break
+        #if win32api.GetKeyState(0x1B) < 0:
+        #    quittingApp = True
+        #    break
     print("setting up default square...")
     print("find a square you own that has a yellow boarder (typically Smoldering Ground)")
     print("where its corners aren't obstructed from view")
@@ -453,16 +448,16 @@ def setUp():
 
     while True:
 
-        if win32api.GetKeyState(0x53) < 0 and quittingApp == False:
-
+        #if win32api.GetKeyState(0x53) < 0 and quittingApp == False:
+        if win32api.GetKeyState(0x53) < 0:
             createDefaultSquare()
             #positionToPurpleTop(squareList[1],pyautogui.position()[0], pyautogui.position()[1], squareList[1].height, squareList[1].width, squareList[1].topDiff)
             break
 
-        if win32api.GetKeyState(0x1B) < 0:
-            quittingApp = True
-            break
-        elif quittingApp == True:
+        #if win32api.GetKeyState(0x1B) < 0:
+        #    quittingApp = True
+        #    break
+        #elif quittingApp == True:
             break
 def startUp():
     #refresh page
@@ -477,6 +472,7 @@ def startUp():
     #playbackRefresh("refresh_positioning.json")
 
 def openCloseInspectConsole(interaction):
+    global consoleActive
     print("called")
     if interaction == openCloseConsole.open:
         pyautogui.keyDown("ctrl")
@@ -484,7 +480,9 @@ def openCloseInspectConsole(interaction):
         pyautogui.press("j")
         pyautogui.keyUp("ctrl")
         pyautogui.keyUp("shift")
+        
         consoleActive = True
+        print("consoleActive bool = true")
     elif interaction == openCloseConsole.close:
         if pyautogui.position()[0] > 100:
             moveClick(pyautogui.position()[0] - 100,pyautogui.position()[1])
@@ -496,12 +494,13 @@ def openCloseInspectConsole(interaction):
         pyautogui.keyUp("ctrl")
         pyautogui.keyUp("shift")
         consoleActive = False
+        print("consoleActive bool = False")
 def getIngamePos_and_landType():
     x_start_point = 1560
-    y_start_point = 146
+    y_start_point = 142
 
     x_howFar = 39
-    y_howFar = 900
+    y_howFar = 906
 
 
     xString = ""
@@ -752,52 +751,47 @@ def waitTillPlantsAreLoaded():
     pass
 
 def checkForHarvests(timeBeforeCheck = 60):
-    while win32api.GetKeyState(0x51) > -1:
-        #print("checking for harvest")
-
-        #refresh the page to avoid memory crash of web browerser
-        pyautogui.keyDown("ctrl")
-        pyautogui.press("r")
-        pyautogui.keyUp("ctrl")
-        #sleep to wait for the game to load
-        sleep(20)
-        #move back to where we were 
-        hudClick(hudArea.water)
-        #waitTillPlantsAreLoaded()
-        onRefreshFindFarm()
-        
-        for i in range(len(squareList)):
-            if i == 0: continue
-
-            if squareList[i].harvestClock == 0:
-
-                harvestQueue.append(squareList[i])
+    #while win32api.GetKeyState(0x51) > -1:
+    #print("checking for harvest")
+    #refresh the page to avoid memory crash of web browerser
+    #print("harvestCheck")
+    #pyautogui.keyDown("ctrl")
+    #pyautogui.press("r")
+    #pyautogui.keyUp("ctrl")
+    #sleep to wait for the game to load
+    #sleep(20)
+    #move back to where we were 
+    #hudClick(hudArea.water)
+    #waitTillPlantsAreLoaded()
+    #onRefreshFindFarm()
     
-        currentHarvestQueue = harvestQueue
-        currentPlantingQueue = plantingQueue
+    print("Doing farming checks")
+    for i in range(len(squareList)):
+        if i == 0: continue
+        if squareList[i].harvestClock == 0:
+            harvestQueue.append(squareList[i])
 
-        harvestQueue.clear
-        plantingQueue.clear
-
-        for i in range (len(currentHarvestQueue)):
-            harvestFlower(currentHarvestQueue[i])
-            #print("harvesting ", i)
-
-        currentHarvestQueue.clear
-
-        for i in range (len(currentPlantingQueue)):
-            plantFlower(currentPlantingQueue[i])
-            #print("planting ", i)
-
-        currentPlantingQueue.clear
-        Timer(timeBeforeCheck, checkForHarvests, args=[timeBeforeCheck]).start()
+    currentHarvestQueue = harvestQueue
+    currentPlantingQueue = plantingQueue
+    harvestQueue.clear
+    plantingQueue.clear
+    for i in range (len(currentHarvestQueue)):
+        harvestFlower(currentHarvestQueue[i])
+        #print("harvesting ", i)
+    currentHarvestQueue.clear
+    for i in range (len(currentPlantingQueue)):
+        plantFlower(currentPlantingQueue[i])
+        #print("planting ", i)
+    currentPlantingQueue.clear
+    Timer(timeBeforeCheck, checkForHarvests, args=[timeBeforeCheck]).start()
 
 
         #callCheckHarvest(timeBeforeCheck)
-    if win32api.GetKeyState(0x1B) < 0:
-        print("bot is now closing")
+    #if win32api.GetKeyState(0x1B) < 0:
+        #print("bot is now closing")
 
 def onRefreshFindFarm():
+    print("on refresh find farm")
     #click on square
     hudClick(hudArea.water)
     openCloseConsole(openCloseConsole.open)
@@ -806,30 +800,35 @@ def onRefreshFindFarm():
     moveClick(500, 500)
     
 
-
     #look at in game pos
     checkingX, checkingY, checkingLand = getIngamePos_and_landType()
     foundMatch = False
     foundMatchSquare = None
     #random first click
-    for i in range (len(squareList)):
-        if squareList[i] == 0: continue
-
-        if squareList[i].ingamePos != [checkingX, checkingY]:
-            continue
-        elif squareList[i].ingamePos == [checkingX, checkingY]:
-            foundMatch = True
-            foundMatchSquare = squareList[i]
-            break
-    #search
-
+    if bottomRightCenterPointDistance == [0,0]:
+        print("bottomRightCenterPointDistance")
+    if bottomLeftCenterPointDistance == [0,0]:
+        print("bottomLeftCenterPointDistance")
+    if topRightCenterPointDistance == [0,0]:
+        print("topRightCenterPointDistance")
+    if topLeftCenterPointDistance == [0,0]:
+        print("topLeftCenterPointDistance")
     while True:
         harvestRelignIfSideHit()
+
+        if [checkingX, checkingY] == squareList[2].ingamePos:
+            foundMatch = True
+            foundMatchSquare = squareList[2]
+
         if foundMatch == True:
-            pyautogui.dragTo(squareList[i].centerPoint[0], squareList[i].centerPoint[1], 1)
+            pyautogui.dragTo(squareList[2].centerPoint[0], squareList[2].centerPoint[1], 1)
             break
         
         else:
+            print("to find square")
+
+            
+
             #top left x is less and y is less
             if checkingX < squareList[2].ingamePos[0] and checkingY < squareList[2].ingamePos[1]:
                 moveClick(pyautogui.position()[0] + bottomRightCenterPointDistance[0], pyautogui.position()[1] + bottomRightCenterPointDistance[1])
@@ -851,41 +850,41 @@ def onRefreshFindFarm():
                 moveClick(pyautogui.position()[0] + topLeftCenterPointDistance[0], pyautogui.position()[1] + topLeftCenterPointDistance[1])
                 pyautogui.click()
                 checkingX, checkingY, checkingLand = getIngamePos_and_landType()
-    pass
 
 def harvestRelignIfSideHit():
+    print("checking relign side hit")
         #if left side
-    if pyautogui.position[0] < 127:
+    if pyautogui.position()[0] < 127:
         #if top left
-        if pyautogui.position[1] <= 530:
-            pyautogui.dragTo(1165, 951, 2)
+        if pyautogui.position()[1] <= 530:
+            pyautogui.dragTo(1187,849, 2)
         #if bottom left
-        if pyautogui.position[1] > 530:
+        if pyautogui.position()[1] > 530:
             pyautogui.dragTo(1315, 207, 2)
     #if right side
-    if pyautogui.position[0] > 1385: 
+    if pyautogui.position()[0] > 1385: 
         # if top right
-        if pyautogui.position[1] <= 530:
+        if pyautogui.position()[1] <= 530:
             pyautogui.dragTo(250, 927, 2)
         # if bottom right
-        elif pyautogui.position[1] > 530:
+        elif pyautogui.position()[1] > 530:
             pyautogui.dragTo(213, 221, 2)
     #if top side
-    if pyautogui.position[1] < 127:
+    if pyautogui.position()[1] < 127:
         #if top left
-        if pyautogui.position[0] <= 717:
+        if pyautogui.position()[0] <= 717:
             pyautogui.dragTo(1165, 951, 2)
         #if top right
-        elif pyautogui.position[0] > 717:
+        elif pyautogui.position()[0] > 717:
             pyautogui.dragTo(250, 927, 2)
             
     #if bottom side
-    if pyautogui.position[1] > 970 :
+    if pyautogui.position()[1] > 970 :
         #if bottom left
-        if pyautogui.position[0] <= 717:
+        if pyautogui.position()[0] <= 717:
             pyautogui.dragTo(1315, 207, 2)
         #if bottom right
-        elif pyautogui.position[0] > 717:
+        elif pyautogui.position()[0] > 717:
             pyautogui.dragTo(213, 221, 2)
     
 def harvesting():
@@ -910,13 +909,22 @@ def harvestFlower(square):
     #if it does click harvest
     screenshot = pyautogui.screenshot()
     #green harvest button is at x900, y574
-    if screenshot.getpixel((874,572)) == (120,210,130):
-        print("called click harvest")
-        moveClick(900, 574)
-    #if clear land comes up
-    elif screenshot.getpixel((888, 574)) == (120,210,130):
-        print("called cancel clear land")
-        moveClick(1000, 572)
+    if consoleActive:
+        if screenshot.getpixel((647,573)) == (120,210,130):
+            moveClick(642,573)
+        elif screenshot.getpixel((677,496)) == (120,210,130):
+            moveClick(761,567)
+        
+    elif consoleActive == False:
+        if screenshot.getpixel((874,572)) == (120,210,130):
+            print("called click harvest")
+            moveClick(900, 574)
+        #if clear land comes up
+        elif screenshot.getpixel((888, 574)) == (120,210,130):
+            print("called cancel clear land")
+            moveClick(1000, 572)
+
+ 
     
     square.needsHarvest = False
     print("adding to planting queue from harvestFlower")
@@ -942,48 +950,67 @@ def plantFlower(square, tile = flowerArea.tile1):
 
     print("check for pixels")
     #check if area menu screen to select plant is present
-    sleep(0.5)
+    sleep(1.5)
     screenshot = pyautogui.screenshot()
-    print("pixel colour = ", screenshot.getpixel((732,365)))
+
     if screenshot.getpixel((732,365)) == (255,255,255):
-        print("pixels found")
         while(True):
             screenshot = pyautogui.screenshot()
-            print("in loop finding flowers")
-            
+        
             #if no flowers (vist flower market button pops up)
-            if screenshot.getpixel((878, 700)) == (120, 210, 130):
-                print("no flowers")
-                plantingMenuClick(bagArea.exit, 0.2)
-                moveToWater = True
-
-            elif screenshot.getpixel((680, 492)) != (255,255,255):
-                print("found flower")
-                #click tile
-                plantingMenuClick(tile)
-                #check id
-                #apply stats to lands
-                #if cannot find ID or get stats default to 1 hour for harvest clock
-
-                square.harvestTime = 60
-                square.harvestClock = square.harvestTime
-                print ("setting timer thread for square")
-                thread = timerThread.myThread(square)
-                thread.start()
-                #thread.join()
-
-                #check for harvest cutscene
-                seconds = 4
+            if consoleActive:
+                if screenshot.getpixel((657,686)) == (120, 210, 130):
+                    plantingMenuClick(bagArea.exit, 0.2)
+                    moveToWater = True
+                elif screenshot.getpixel((405,466)) != (255,255,255):
+                    #click tile
+                    plantingMenuClick(tile)
+                    #check id
+                    #apply stats to lands
+                    #if cannot find ID or get stats default to 1 hour for harvest clock
+                    square.harvestTime = 60
+                    square.harvestClock = square.harvestTime
+                    thread = timerThread.myThread(square)
+                    thread.start()
+                    #thread.join()
+                    #check for harvest cutscene
+                    seconds = 5
                 
-                print("checking for harvest cutscene")
-                for i in range(seconds):
-                    screenshot = pyautogui.screenshot()
-                    print("rgb colour1 ", screenshot.getpixel((579, 103)), " rgb colour2 ",screenshot.getpixel((1725, 248)))
-                    if screenshot.getpixel((579, 103)) == (90,207,148) and screenshot.getpixel((1725, 248)) == (166,212,105):
-                        moveClick(345,271)
-                
-                    time.sleep(1)
+
+                    for i in range(seconds):
+                        screenshot = pyautogui.screenshot()
+
+                        if screenshot.getpixel((204,105)) == (0,23,59) and screenshot.getpixel((1143,114)) == (0,23,10):
+                            moveClick(345,271)
+
+                        sleep(1)
                 moveToWater = True
+            if consoleActive == False:
+                if screenshot.getpixel((878, 700)) == (120, 210, 130):
+                    plantingMenuClick(bagArea.exit, 0.2)
+                    moveToWater = True
+                elif screenshot.getpixel((680, 492)) != (255,255,255):
+                    plantingMenuClick(tile)
+
+                    square.harvestTime = 60
+                    square.harvestClock = square.harvestTime
+
+                    thread = timerThread.myThread(square)
+                    thread.start()
+                    #thread.join()
+    
+                    seconds = 5
+
+                    for i in range(seconds):
+                        screenshot = pyautogui.screenshot()
+
+                        if screenshot.getpixel((579, 103)) == (90,207,148) and screenshot.getpixel((1725, 248)) == (166,212,105):
+                            moveClick(345,271)
+
+                        sleep(1)
+                    moveToWater = True
+
+            
 
             if(moveToWater):
                 #click water icon
@@ -1357,9 +1384,9 @@ def createFarmingSquares():
             print('finished setting up farming positions')
             break  
         
-        if win32api.GetKeyState(0x1B) < 0:
-            quittingApp = True
-            break
+        #if win32api.GetKeyState(0x1B) < 0:
+        #    quittingApp = True
+        #    break
 
         #break
 

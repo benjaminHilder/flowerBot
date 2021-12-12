@@ -15,10 +15,10 @@ from pytesseract import Output
 
 pytesseract.tesseract_cmd = "E:\\Program Files\\Tesseract-OCR\\tesseract.exe"
 x_start_point = 1560
-y_start_point = 146
+y_start_point = 142
 
 x_howFar = 39
-y_howFar = 900
+y_howFar = 906
 
 
 xString = ""
