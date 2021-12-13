@@ -15,7 +15,7 @@ from pytesseract import Output
 
 pytesseract.tesseract_cmd = "E:\\Program Files\\Tesseract-OCR\\tesseract.exe"
 x_start_point = 1560
-y_start_point = 110
+y_start_point = 150
 x_howFar = 39
 y_howFar = 922
 xString = ""
@@ -40,40 +40,28 @@ newScreenshot = pyautogui.screenshot(region=(x_start_point, y_start_point + y-2,
 open_cv_image2 = np.array(newScreenshot) 
  #Convert RGB to BGR 
 open_cv_image2 = open_cv_image2[:, :, ::-1].copy()
-#cv2.imshow("new", open_cv_image2)
-#cv2.waitKey(0)
+
 words_in_image = pytesseract.image_to_string(open_cv_image2)
 word_list = words_in_image.split()
-#print("word_list ", word_list)
-#if word_list[0] != 'Tile':
-#    word_list.pop(0)
-
+cv2.imshow("new", open_cv_image2)
+cv2.waitKey(0)
 for i in range(len(word_list)):
     if word_list[i] == 'Tile':
         xString = word_list[i + 1]
         yString = word_list[i + 2]
-        landString = word_list[i + 4]
-
-#print(xString)
-#print(yString)
-#print(landString)
-
+        #landString = word_list[i + 4]
+print("ystring: ", yString)
+print("xString: ",xString)
 xClean1 = xString.replace('(', '')
 xClean2 = xClean1.replace(',', '')
 yClean1 = yString.replace(')', '')
-xInt = int(xClean2)
+
+#xInt = int(xClean2)
 yInt = int(yClean1)
 
-#xClean1 = xString.replace('(', '')
-#xClean2 = xClean1.replace(',', '')
-#
-#yClean1 = yString.replace(')', '')
-#
-#xInt = int(xClean2)
-#yInt = int(yClean1)
-
-#print(xInt)
-#print(yInt)
+print(xInt)
+print(yInt)
 #print(landString)
+#falseLandEnum = landKind.false
 cv2.imshow("new", open_cv_image2)
 cv2.waitKey(0)

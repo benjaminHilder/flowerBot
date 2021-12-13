@@ -126,6 +126,7 @@ class landKind(Enum):
     lava = 4
     water = 5
     ice = 6
+    false = 7
 
 class openCloseConsole(Enum):
     open = 1
@@ -133,9 +134,9 @@ class openCloseConsole(Enum):
 
 def main():
     
-
+    #getIngamePos_and_landType()
     
-    ##while quittingApp == False:
+    #while quittingApp == False:
     countdownTimer()
     #recenterNewSquare(baseSquare)
     #water doesnt bring any menus up on good or bad clicks
@@ -404,7 +405,7 @@ def plantingMenuClick(plantingCommand, time = 0.2):
             moveClick(1090,333, time)   
 def setUp():
 
-    moveClick(1682, 109, 0.3)
+    moveClick(1682, 141, 0.3)
     pyautogui.write('[board click]')
     hudClick(hudArea.water)
     #0x53 == S key
@@ -475,8 +476,9 @@ def openCloseInspectConsole(interaction):
         consoleActive = False
         print("consoleActive bool = False")
 def getIngamePos_and_landType():
+    pytesseract.tesseract_cmd = "E:\\Program Files\\Tesseract-OCR\\tesseract.exe"
     x_start_point = 1560
-    y_start_point = 110
+    y_start_point = 150
     x_howFar = 39
     y_howFar = 922
     xString = ""
@@ -484,7 +486,7 @@ def getIngamePos_and_landType():
     landString = ""
     xInt = 0
     yInt = 0
-    
+
     landString = None
     landEnum = None
     #print("Taking a screenshot...")
@@ -501,35 +503,22 @@ def getIngamePos_and_landType():
     open_cv_image2 = np.array(newScreenshot) 
      #Convert RGB to BGR 
     open_cv_image2 = open_cv_image2[:, :, ::-1].copy()
-    #cv2.imshow("new", open_cv_image2)
-    #cv2.waitKey(0)
+
     words_in_image = pytesseract.image_to_string(open_cv_image2)
     word_list = words_in_image.split()
-    #print("word_list ", word_list)
-    #if word_list[0] != 'Tile':
-    #    word_list.pop(0)
-    
+
     for i in range(len(word_list)):
         if word_list[i] == 'Tile':
             xString = word_list[i + 1]
             yString = word_list[i + 2]
-            landString = word_list[i + 4]
-
-    xString = word_list[1]
-    yString = word_list[2]
-    landString = word_list[4]
-
-    print(xString)
-    print(yString)
-    print(landString)
+            #landString = word_list[i + 4]
 
     xClean1 = xString.replace('(', '')
     xClean2 = xClean1.replace(',', '')
-
     yClean1 = yString.replace(')', '')
-
     xInt = int(xClean2)
     yInt = int(yClean1)
+
 
     if landString == "soil":
         landEnum = landKind.soil
@@ -544,11 +533,12 @@ def getIngamePos_and_landType():
     elif landString == "ice":
         landEnum = landKind.ice
 
-    #print(xInt)
-    #print(yInt)
+    print(xInt)
+    print(yInt)
     #print(landEnum)
+    falseLandEnum = landKind.false
 
-    return xInt, yInt, landEnum
+    return xInt, yInt, falseLandEnum
 
 def recordingRefresh():
     recorder.runListeners()
@@ -889,9 +879,10 @@ def harvestFlower(square):
     #if it does click harvest
     screenshot = pyautogui.screenshot()
     #green harvest button is at x900, y574
+    sleep(0.5)
     if consoleActive:
-        if screenshot.getpixel((647,573)) == (120,210,130):
-            moveClick(642,573)
+        if screenshot.getpixel((647,578)) == (120,210,130):
+            moveClick(647,578)
         elif screenshot.getpixel((677,496)) == (120,210,130):
             moveClick(761,567)
         
@@ -1439,9 +1430,10 @@ def addNewSquare(oldSquare, newSquare, squarePosEnum):
         #by how much we move the squares inner, move the other points
         #using the distance between the inner and outer for each point
         #add the other points based on that
-        recenterNewSquare(newSquare)
-        SqCenterPoint(newSquare)
-        pyautogui.moveTo(newSquare.centerPoint)
+
+        #recenterNewSquare(newSquare)
+        #SqCenterPoint(newSquare)
+        #pyautogui.moveTo(newSquare.centerPoint)
         squareList.append(newSquare)
         #print("Sqaure has been appened")
         global topLeftCenterPointDistance
