@@ -740,7 +740,8 @@ def checkForHarvests(timeBeforeCheck = 60):
         if i == 0: continue
         if squareList[i].harvestClock == 0:
             harvestQueue.append(squareList[i])
-
+            
+        print("harvest queue: (just added)",len(harvestQueue))
     currentHarvestQueue = harvestQueue
     currentPlantingQueue = plantingQueue
     harvestQueue.clear
@@ -748,10 +749,13 @@ def checkForHarvests(timeBeforeCheck = 60):
     for i in range (len(currentHarvestQueue)):
         harvestFlower(currentHarvestQueue[i])
         #print("harvesting ", i)
+    print("harvest queue: (done)",len(currentHarvestQueue))
+    print("planting queue: (just added)",len(currentPlantingQueue))
     currentHarvestQueue.clear
     for i in range (len(currentPlantingQueue)):
         plantFlower(currentPlantingQueue[i])
         #print("planting ", i)
+    print("planting queue: (done)",len(currentPlantingQueue))
     currentPlantingQueue.clear
     Timer(timeBeforeCheck, checkForHarvests, args=[timeBeforeCheck]).start()
 
